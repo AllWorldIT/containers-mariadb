@@ -37,3 +37,5 @@ RUN set -ex; \
 
 VOLUME ["/var/lib/mysql"]
 
+EXPOSE 3306
+

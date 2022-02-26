@@ -13,5 +13,8 @@ max-allowed-packet=128M
 ; Strict mode so we don't silently ignore some kinds of errors
 sql-mode=STRICT_ALL_TABLES
 
+; Listen on port 3306
+bind-address = 0.0.0.0
+
 [mysqldump]
 max-allowed-packet=1G
