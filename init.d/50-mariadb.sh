@@ -65,13 +65,13 @@ EOF
 	/usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-networking=1 < "$tfile"
 	rm -f $tfile
 
-	find /docker-entrypoint-initdb.d -type f | while read f
+	find /docker-entrypoint-initdb.d -type f | sort | while read f
 	do
 		case "$f" in
 			*.sql)    echo "NOTICE: initdb.d - Loading [$f]"; /usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-networking=1 < "$f"; echo ;;
-			*.sql.gz) echo "NOTICE: initdb.d - Loading [$f]"; gunzip -c "$f" | /usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-networking=1 < "$f"; echo ;;
-			*.sql.xz) echo "NOTICE: initdb.d - Loading [$f]"; unxz -c "$f" | /usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-networking=1 < "$f"; echo ;;
-			*.sql.zst) echo "NOTICE: initdb.d - Loading [$f]"; unzstd -c "$f" | /usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-networking=1 < "$f"; echo ;;
+			*.sql.gz) echo "NOTICE: initdb.d - Loading [$f]"; gunzip -c "$f" | /usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-networking=1; echo ;;
+			*.sql.xz) echo "NOTICE: initdb.d - Loading [$f]"; unxz -c "$f" | /usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-networking=1; echo ;;
+			*.sql.zst) echo "NOTICE: initdb.d - Loading [$f]"; unzstd -c "$f" | /usr/bin/mysqld --user=mysql --bootstrap --verbose=0 --skip-networking=1; echo ;;
 			*)        echo "WARNING: Ignoring initdb entry [$f]" ;;
 		esac
 	done
