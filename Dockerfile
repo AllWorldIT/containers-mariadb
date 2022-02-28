@@ -14,6 +14,11 @@ RUN set -ex; \
 	true "Cleanup"; \
 	rm -f /var/cache/apk/*
 
+# Enable networking
+RUN set -ex; \
+	sed -ire 's,^skip-networking,#skip-networking,' /etc/my.cnf.d/mariadb-server.cnf; \
+	grep -E '^#skip-networking$' /etc/my.cnf.d/mariadb-server.cnf
+
 # MariaDB
 COPY etc/my.cnf.d/docker.cnf /etc/my.cnf.d/docker.cnf
 COPY etc/supervisor/conf.d/mariadb.conf /etc/supervisor/conf.d/mariadb.conf
@@ -21,19 +26,19 @@ COPY init.d/50-mariadb.sh /docker-entrypoint-init.d/50-mariadb.sh
 COPY pre-init-tests.d/50-mariadb.sh /docker-entrypoint-pre-init-tests.d/50-mariadb.sh
 COPY tests.d/50-mariadb.sh /docker-entrypoint-tests.d/50-mariadb.sh
 RUN set -ex; \
-		chown root:root \
-			/etc/my.cnf.d/docker.cnf \
-			/etc/supervisor/conf.d/mariadb.conf \
-			/docker-entrypoint-init.d/50-mariadb.sh \
-			/docker-entrypoint-pre-init-tests.d/50-mariadb.sh \
-			/docker-entrypoint-tests.d/50-mariadb.sh; \
-		chmod 0644 \
-			/etc/my.cnf.d/docker.cnf \
-			/etc/supervisor/conf.d/mariadb.conf; \
-		chmod 0755 \
-			/docker-entrypoint-init.d/50-mariadb.sh \
-			/docker-entrypoint-pre-init-tests.d/50-mariadb.sh \
-			/docker-entrypoint-tests.d/50-mariadb.sh
+	chown root:root \
+		/etc/my.cnf.d/docker.cnf \
+		/etc/supervisor/conf.d/mariadb.conf \
+		/docker-entrypoint-init.d/50-mariadb.sh \
+		/docker-entrypoint-pre-init-tests.d/50-mariadb.sh \
+		/docker-entrypoint-tests.d/50-mariadb.sh; \
+	chmod 0644 \
+		/etc/my.cnf.d/docker.cnf \
+		/etc/supervisor/conf.d/mariadb.conf; \
+	chmod 0755 \
+		/docker-entrypoint-init.d/50-mariadb.sh \
+		/docker-entrypoint-pre-init-tests.d/50-mariadb.sh \
+		/docker-entrypoint-tests.d/50-mariadb.sh
 
 VOLUME ["/var/lib/mysql"]
 
