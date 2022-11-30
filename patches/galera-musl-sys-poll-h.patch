@@ -1,0 +1,14 @@
+diff --color -ru galera-release_26.4.13_vanilla/asio/asio/detail/socket_types.hpp galera-release_26.4.13_socket-types/asio/asio/detail/socket_types.hpp
+--- galera-release_26.4.13_vanilla/asio/asio/detail/socket_types.hpp	2022-11-02 06:09:14.000000000 +0000
++++ galera-release_26.4.13_socket-types/asio/asio/detail/socket_types.hpp	2022-11-29 15:43:34.467326719 +0000
+@@ -63,7 +63,7 @@
+    || defined(__EMSCRIPTEN__)
+ #  include <poll.h>
+ # elif !defined(__SYMBIAN32__)
+-#  include <sys/poll.h>
++#  include <poll.h>	/* avoid "redirecting incorrect #include <sys/poll.h> to <poll.h>" warning */
+ # endif
+ # include <sys/types.h>
+ # include <sys/stat.h>
+Only in galera-release_26.4.13_socket-types/asio/asio/detail: socket_types.hpp.orig
+Only in galera-release_26.4.13_socket-types/asio/asio/detail: socket_types.hpp.rej

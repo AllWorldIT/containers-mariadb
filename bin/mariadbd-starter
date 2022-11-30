@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# Next thing we do is check if we're bootstraping this node
+ARGS=
+if [ -e /var/lib/mysql/bootstrap-cluster ]; then
+	echo "NOTICE: Bootstrapping cluster from this node!"
+	ARGS=--wsrep-new-cluster
+	rm -f /var/lib/mysql/bootstrap-cluster
+fi
+if [ -e /var/lib/mysql/force-bootstrap-cluster ]; then
+	echo "NOTICE: Forcing bootstrapping cluster from this node!"
+	sed -i -e 's,safe_to_bootstrap: 0,safe_to_bootstrap: 1,' /var/lib/mysql/grastate.dat
+	rm -f /var/lib/mysql/force-bootstrap-cluster
+fi
+
+exec /usr/bin/mariadbd "$@" $ARGS

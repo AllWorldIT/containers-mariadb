@@ -1,4 +1,4 @@
-[mysqld]
+[mariadbd]
 ; File per table
 innodb-file-per-table
 
@@ -14,7 +14,11 @@ max-allowed-packet=128M
 sql-mode=STRICT_ALL_TABLES
 
 ; Listen on port 3306
-bind-address = 0.0.0.0
+bind-address = ::
 
-[mysqldump]
+; Clustering variables, set to reasonable defaults
+wsrep_provider = /usr/lib/galera/libgalera_smm.so
+wsrep_sst_method = mariabackup
+
+[mariadb-dump]
 max-allowed-packet=1G
