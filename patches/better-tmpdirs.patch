@@ -1,0 +1,24 @@
+diff --git a/scripts/wsrep_sst_mariabackup.sh b/scripts/wsrep_sst_mariabackup.sh
+index f440660d899..6ea47620bd9 100644
+--- a/scripts/wsrep_sst_mariabackup.sh
++++ b/scripts/wsrep_sst_mariabackup.sh
+@@ -1045,16 +1045,18 @@ if [ "$WSREP_SST_OPT_ROLE" = 'donor' ]; then
+         tmpdir=$(parse_cnf "$encgroups" 'tmpdir')
+         if [ -z "$tmpdir" ]; then
+             xtmpdir="$(mktemp -d)"
++            itmpdir="$(mktemp -d)"
+         elif [ "$OS" = 'Linux' ]; then
+             xtmpdir=$(mktemp '-d' "--tmpdir=$tmpdir")
++            itmpdir=$(mktemp '-d' "--tmpdir=$tmpdir")
+         else
+             xtmpdir=$(TMPDIR="$tmpdir"; mktemp '-d')
++            itmpdir=$(TMPDIR="$tmpdir"; mktemp '-d')
+         fi
+ 
+         wsrep_log_info "Using '$xtmpdir' as mariabackup temporary directory"
+         tmpopts=" --tmpdir='$xtmpdir'"
+ 
+-        itmpdir="$(mktemp -d)"
+         wsrep_log_info "Using '$itmpdir' as mariabackup working directory"
+ 
+         usrst=0

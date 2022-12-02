@@ -3,13 +3,13 @@
 
 # Function to wait for database startup
 function wait_for_startup() {
-	if [ -n "$CLUSTER_JOIN" ]; then
-		check_select="SELECT variable_value FROM performance_schema.global_status WHERE variable_name='wsrep_local_state_comment'"
-		check_value="Synced"
-	else
+	# if [ -n "$CLUSTER_JOIN" ]; then
+	# 	check_select="SELECT variable_value FROM performance_schema.global_status WHERE variable_name='wsrep_local_state_comment'"
+	# 	check_value="Synced"
+	# else
 		check_select="SELECT 1"
 		check_value="1"
-	fi
+	# fi
 
 	for i in {120..0}; do
 		got_value=$(echo "$check_select" | mariadb -s 2> /dev/null) || true
@@ -43,12 +43,17 @@ function wait_for_shutdown() {
 
 
 
-if [ -d "/run/mysqld" ]; then
-	chown -R mysql:mysql /run/mysqld
-else
+if [ ! -d "/run/mysqld" ]; then
 	mkdir -p /run/mysqld
-	chown -R mysql:mysql /run/mysqld
 fi
+chown -R mysql:mysql /run/mysqld
+
+if [ ! -d "/var/tmp/mysqld" ]; then
+	mkdir -p /var/tmp/mysqld/sst
+fi
+chown -R mysql:mysql /var/tmp/mysqld
+chmod 0750 /var/tmp/mysqld
+
 
 # Tuning
 if [ -n "$MYSQL_BUFFER_SIZE" ]; then
@@ -141,6 +146,11 @@ if [ -n "$ENABLE_CLUSTERING" ]; then
 
 	MYSQL_SST_PASSWORD=${MYSQL_SST_PASSWORD:-"mariadb.sst"}
 
+
+	#
+	# Cluster configuration
+	#
+
 	if [ -z "${NODE_NAME}" ]; then
 		NODE_NAME=$(hostname -f)
 	fi
@@ -153,28 +163,31 @@ if [ -n "$ENABLE_CLUSTERING" ]; then
 		NODE_PORT=3306
 	fi
 
-	echo "[mariadb]" > "$CLUSTER_CONF_FILE"
+	echo "[sst]" > "$CLUSTER_CONF_FILE"
+	echo "tmpdir = /var/tmp/mysqld/sst" >> "$CLUSTER_CONF_FILE"
+
+	echo "[mariadb]" >> "$CLUSTER_CONF_FILE"
 
 	echo "wsrep_on = ON" >> "$CLUSTER_CONF_FILE"
 
 	echo "binlog_format= 'ROW'" >> "$CLUSTER_CONF_FILE"
 
 	if [ -n "${CLUSTER_NAME}" ]; then
-		echo "wsrep_cluster_name=${CLUSTER_NAME}" >> "$CLUSTER_CONF_FILE"
+		echo "wsrep_cluster_name = ${CLUSTER_NAME}" >> "$CLUSTER_CONF_FILE"
 	fi
 
-	echo "wsrep_node_name=${NODE_NAME}" >> "$CLUSTER_CONF_FILE"
-	echo "wsrep_node_address=${NODE_IP}" >> "$CLUSTER_CONF_FILE"
+	echo "wsrep_node_name = ${NODE_NAME}" >> "$CLUSTER_CONF_FILE"
+	echo "wsrep_node_address = ${NODE_IP}" >> "$CLUSTER_CONF_FILE"
 
 	if [ -z "${CLUSTER_JOIN}" ]; then
 		CLUSTER_JOIN="$NODE_NAME"
 	fi
-	echo "wsrep_cluster_address=gcomm://${CLUSTER_JOIN}" >> "$CLUSTER_CONF_FILE"
+	echo "wsrep_cluster_address = gcomm://${CLUSTER_JOIN}" >> "$CLUSTER_CONF_FILE"
 
 	if [ -n "$CLUSTER_DEBUG" ]; then
-		cluster_debug_args="debug=YES;"
+		echo "wsrep_debug = ON" >> "$CLUSTER_CONF_FILE"
 	fi
-	echo "wsrep_provider_options=gmcast.listen_addr=tcp://[::]:4567;${cluster_debug_args}" >> "$CLUSTER_CONF_FILE"
+	echo "wsrep_provider_options = gmcast.listen_addr=tcp://[::]:4567" >> "$CLUSTER_CONF_FILE"
 
 	# We need to make sure that the "mysql" user exists as this is used for SST
 	if [ -e /var/lib/mysql/.create_sst_user ]; then
@@ -189,9 +202,39 @@ FLUSH PRIVILEGES;
 EOF
 		rm -f /var/lib/mysql/.create_sst_user
 	fi
+
 	# Setup authentication details for SST
 	echo "[mariadb]" > "$CLUSTER_PRIVCONF_FILE"
 	echo "wsrep_sst_auth = mariadb.sst:$MYSQL_SST_PASSWORD" >> "$CLUSTER_PRIVCONF_FILE"
+
+
+	#
+	# GTID
+	#
+
+	if [ -n "$CLUSTER_USE_GTID" ]; then
+
+		if [ -z "$CLUSTER_GTID_LOCAL_ID" ]; then
+			echo "ERROR: For a GTID enabled cluster, environment variable 'CLUSTER_GTID_LOCAL_ID' must be provided"
+			exit 1
+		fi
+
+		if [ -z "$CLUSTER_GTID_CLUSTER_ID" ]; then
+			echo "ERROR: For a GTID enabled cluster, environment variable 'CLUSTER_GTID_CLUSTER_ID' must be provided"
+			exit 1
+		fi
+
+		echo "wsrep_gtid_mode = ON" >> "$CLUSTER_CONF_FILE"
+		echo "wsrep_gtid_domain_id = ${CLUSTER_GTID_LOCAL_ID}" >> "$CLUSTER_CONF_FILE"
+		echo "gtid_domain_id = ${CLUSTER_GTID_CLUSTER_ID}" >> "$CLUSTER_CONF_FILE"
+		echo "log_bin = ON" >> "$CLUSTER_CONF_FILE"
+		echo "log_slave_updates = ON" >> "$CLUSTER_CONF_FILE"
+	fi
+
+
+	#
+	# Bootstrapping
+	#
 
 	# We need to trigger bootstrapping if we've got the env defined
 	if [ -n "$CLUSTER_BOOTSTRAP" ]; then
@@ -203,6 +246,11 @@ EOF
 			touch /var/lib/mysql/force-bootstrap-cluster
 		fi
 	fi
+
+
+	#
+	# Permissions
+	#
 
 	# If we have a private configuration file, set the perms
 	if [ -e "$CLUSTER_PRIVCONF_FILE" ]; then
@@ -222,7 +270,7 @@ fi
 DB_VERSION_OLD=$([ -e /var/lib/mysql/mysql_upgrade_info ] && cat /var/lib/mysql/mysql_upgrade_info || :)
 DB_VERSION_NEW=$(mariadbd --version | awk '{ print $3 }')
 
-if [ -n "$DB_VERSION_OLD" -a "$DB_VERSION_OLD" != "$DB_VERSION_NEW" ]; then
+if [ -n "$DB_VERSION_OLD" -a "${DB_VERSION_OLD%-log}" != "${DB_VERSION_NEW%-log}" ]; then
 	echo "NOTICE: Database needs updating"
 	echo "NOTICE:   - old: $DB_VERSION_OLD"
 	echo "NOTICE:   - new: $DB_VERSION_NEW"
@@ -230,7 +278,7 @@ if [ -n "$DB_VERSION_OLD" -a "$DB_VERSION_OLD" != "$DB_VERSION_NEW" ]; then
 	echo "NOTICE: Updating database..."
 
 	# Start database
-	mariadbd --user=mysql --skip-networking &
+	mariadbd --user=mysql --skip-networking --wsrep-provider=none &
 	mariadb_pid=$!
 	wait_for_startup
 

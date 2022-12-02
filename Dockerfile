@@ -42,6 +42,8 @@ RUN set -ex; \
 RUN set -ex; \
 	cd build; \
 	cd mariadb-${MARIADB_VER}; \
+# Patching
+	patch -p1 < ../patches/better-tmpdirs.patch; \
 # Compiler flags
 	export CFLAGS="-march=x86-64 -mtune=generic -Os -pipe -fno-plt -fexceptions -Wp,-D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -fstack-clash-protection -fcf-protection -flto=auto"; \
 	export CXXFLAGS="-Wp,-D_GLIBCXX_ASSERTIONS"; \

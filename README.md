@@ -106,6 +106,22 @@ Optional TCP/IP port of this node for cluster communication. Defaults to 3306.
 Comma separated list of cluster nodes to join.
 
 
+## Cluster GTID Support
+
+### CLUSTER_ENABLE_GTID: optional
+
+Enable GTID support in the cluster.
+
+### CLUSTER_GTID_LOCAL_ID: mandatory
+
+This must be set to a globally unique ID. It must not be the same as any CLUSTER_GTID_CLUSTER_ID.
+
+### CLUSTER_GTID_CLUSTER_ID: mandatory
+
+This must be set to a globally unique ID. It must not be the same as any CLUSTER_GTID_LOCAL_ID.
+
+
+
 ## Bootstrapping a cluster
 
 Should this be the first node starting up, create the data directory and touch the bootstrap file using the below...
