@@ -3,7 +3,7 @@
 
 # Function to wait for database startup
 function wait_for_startup() {
-	# if [ -n "$CLUSTER_JOIN" ]; then
+	# if [ -n "$MYSQL_CLUSTER_JOIN" ]; then
 	# 	check_select="SELECT variable_value FROM performance_schema.global_status WHERE variable_name='wsrep_local_state_comment'"
 	# 	check_value="Synced"
 	# else
@@ -60,6 +60,8 @@ if [ -n "$MYSQL_BUFFER_SIZE" ]; then
 	perl -pi -e "s/innodb-buffer-pool-size=.*/innodb-buffer-pool-size=$MYSQL_BUFFER_SIZE/" /etc/my.cnf.d/docker.cnf
 fi
 
+
+
 if [ -d /var/lib/mysql/mysql ]; then
 	chown -R mysql:mysql /var/lib/mysql
 else
@@ -97,7 +99,7 @@ FLUSH PRIVILEGES;
 EOF
 
 	# Trigger SST user creation
-	[ -n "$ENABLE_CLUSTERING" ] && touch /var/lib/mysql/.create_sst_user
+	[ -n "$MYSQL_ENABLE_CLUSTERING" ] && touch /var/lib/mysql/.create_sst_user
 
 	if [ -n "$MYSQL_DATABASE" ]; then
 		echo "NOTICE: Creating database: $MYSQL_DATABASE"
@@ -149,7 +151,7 @@ fi
 # Clustering
 #
 
-if [ -n "$ENABLE_CLUSTERING" ]; then
+if [ -n "$MYSQL_ENABLE_CLUSTERING" ]; then
 	echo "INFO: Setting up cluster"
 
 	# Configure the cluster
@@ -163,16 +165,16 @@ if [ -n "$ENABLE_CLUSTERING" ]; then
 	# Cluster configuration
 	#
 
-	if [ -z "${NODE_NAME}" ]; then
-		NODE_NAME=$(hostname -f)
+	if [ -z "$MYSQL_NODE_NAME" ]; then
+		MYSQL_NODE_NAME=$(hostname -f)
 	fi
 
-	if [ -z "${NODE_IP}" ]; then
-		NODE_IP=$(hostname -i)
+	if [ -z "$MYSQL_NODE_IP" ]; then
+		MYSQL_NODE_IP=$(hostname -i)
 	fi
 
-	if [ -z "${NODE_PORT}" ]; then
-		NODE_PORT=3306
+	if [ -z "$NODE_PORT" ]; then
+		MYSQL_NODE_PORT=3306
 	fi
 
 	echo "[sst]" > "$CLUSTER_CONF_FILE"
@@ -184,19 +186,19 @@ if [ -n "$ENABLE_CLUSTERING" ]; then
 
 	echo "binlog_format= 'ROW'" >> "$CLUSTER_CONF_FILE"
 
-	if [ -n "${CLUSTER_NAME}" ]; then
-		echo "wsrep_cluster_name = ${CLUSTER_NAME}" >> "$CLUSTER_CONF_FILE"
+	if [ -n "${MYSQL_CLUSTER_NAME}" ]; then
+		echo "wsrep_cluster_name = $MYSQL_CLUSTER_NAME" >> "$CLUSTER_CONF_FILE"
 	fi
 
-	echo "wsrep_node_name = ${NODE_NAME}" >> "$CLUSTER_CONF_FILE"
-	echo "wsrep_node_address = ${NODE_IP}" >> "$CLUSTER_CONF_FILE"
+	echo "wsrep_node_name = $MYSQL_NODE_NAME" >> "$CLUSTER_CONF_FILE"
+	echo "wsrep_node_address = $MYSQL_NODE_IP" >> "$CLUSTER_CONF_FILE"
 
-	if [ -z "${CLUSTER_JOIN}" ]; then
-		CLUSTER_JOIN="$NODE_NAME"
+	if [ -z "${MYSQL_CLUSTER_JOIN}" ]; then
+		MYSQL_CLUSTER_JOIN="$MYSQL_NODE_NAME"
 	fi
-	echo "wsrep_cluster_address = gcomm://${CLUSTER_JOIN}" >> "$CLUSTER_CONF_FILE"
+	echo "wsrep_cluster_address = gcomm://$MYSQL_CLUSTER_JOIN" >> "$CLUSTER_CONF_FILE"
 
-	if [ -n "$CLUSTER_DEBUG" ]; then
+	if [ -n "$MYSQL_CLUSTER_DEBUG" ]; then
 		echo "wsrep_debug = ON" >> "$CLUSTER_CONF_FILE"
 	fi
 	echo "wsrep_provider_options = gmcast.listen_addr=tcp://[::]:4567" >> "$CLUSTER_CONF_FILE"
@@ -209,7 +211,7 @@ SET @@SESSION.SQL_LOG_BIN=0;
 FLUSH PRIVILEGES;
 DROP USER IF EXISTS 'mariadb.sst'@'localhost';
 GRANT RELOAD, PROCESS, LOCK TABLES, REPLICATION CLIENT ON *.* TO 'mariadb.sst'@'localhost' IDENTIFIED BY '$MYSQL_SST_PASSWORD';
-SET PASSWORD FOR 'mariadb.sst'@'localhost'=PASSWORD('${MYSQL_SST_PASSWORD}');
+SET PASSWORD FOR 'mariadb.sst'@'localhost'=PASSWORD('$MYSQL_SST_PASSWORD');
 FLUSH PRIVILEGES;
 EOF
 		rm -f /var/lib/mysql/.create_sst_user
@@ -224,21 +226,21 @@ EOF
 	# GTID
 	#
 
-	if [ -n "$CLUSTER_USE_GTID" ]; then
+	if [ -n "$MYSQL_CLUSTER_USE_GTID" ]; then
 
-		if [ -z "$CLUSTER_GTID_LOCAL_ID" ]; then
-			echo "ERROR: For a GTID enabled cluster, environment variable 'CLUSTER_GTID_LOCAL_ID' must be provided"
+		if [ -z "$MYSQL_CLUSTER_GTID_LOCAL_ID" ]; then
+			echo "ERROR: For a GTID enabled cluster, environment variable 'MYSQL_CLUSTER_GTID_LOCAL_ID' must be provided"
 			exit 1
 		fi
 
-		if [ -z "$CLUSTER_GTID_CLUSTER_ID" ]; then
-			echo "ERROR: For a GTID enabled cluster, environment variable 'CLUSTER_GTID_CLUSTER_ID' must be provided"
+		if [ -z "$MYSQL_CLUSTER_GTID_CLUSTER_ID" ]; then
+			echo "ERROR: For a GTID enabled cluster, environment variable 'MYSQL_CLUSTER_GTID_CLUSTER_ID' must be provided"
 			exit 1
 		fi
 
 		echo "wsrep_gtid_mode = ON" >> "$CLUSTER_CONF_FILE"
-		echo "wsrep_gtid_domain_id = ${CLUSTER_GTID_LOCAL_ID}" >> "$CLUSTER_CONF_FILE"
-		echo "gtid_domain_id = ${CLUSTER_GTID_CLUSTER_ID}" >> "$CLUSTER_CONF_FILE"
+		echo "wsrep_gtid_domain_id = $MYSQL_CLUSTER_GTID_LOCAL_ID" >> "$CLUSTER_CONF_FILE"
+		echo "gtid_domain_id = $MYSQL_CLUSTER_GTID_CLUSTER_ID" >> "$CLUSTER_CONF_FILE"
 		echo "log_bin = ON" >> "$CLUSTER_CONF_FILE"
 		echo "log_slave_updates = ON" >> "$CLUSTER_CONF_FILE"
 	fi
@@ -249,11 +251,11 @@ EOF
 	#
 
 	# We need to trigger bootstrapping if we've got the env defined
-	if [ -n "$CLUSTER_BOOTSTRAP" ]; then
+	if [ -n "$MYSQL_CLUSTER_BOOTSTRAP" ]; then
 		echo "NOTICE: Triggering cluster bootstrap"
 		touch /var/lib/mysql/bootstrap-cluster
 		# Check if we really need to force bootstrapping
-		if [ -n "$CLUSTER_BOOTSTRAP_FORCE" ]; then
+		if [ -n "$MYSQL_CLUSTER_BOOTSTRAP_FORCE" ]; then
 			echo "NOTICE: Triggering cluster bootstrap FORCE"
 			touch /var/lib/mysql/force-bootstrap-cluster
 		fi

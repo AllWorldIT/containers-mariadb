@@ -76,7 +76,7 @@ touch data/var/lib/mysql/.create_sst_user
 
 Environment variables can be set to configure the cluster.
 
-### ENABLE_CLUSTERING: mandatory
+### MYSQL_ENABLE_CLUSTERING: mandatory
 
 Set this to any value to enable clustering. eg. ENABLE_CLUSTERING=yes
 
@@ -86,49 +86,49 @@ Set this to any value to enable clustering. eg. ENABLE_CLUSTERING=yes
 This must be specified, the default password used is `msyql.sst` which is not secure.
 
 
-### CLUSTER_DEBUG: optional
+### MYSQL_CLUSTER_DEBUG: optional
 
-Enable debugging mode. eg. CLUSTER_DEBUG=yes
+Enable debugging mode. eg. MYSQL_CLUSTER_DEBUG=yes
 
 
-### CLUSTER_NAME: optional
+### MYSQL_CLUSTER_NAME: optional
 
 Optional name of the cluster.
 
 
-### NODE_NAME: optional
+### MYSQL_NODE_NAME: optional
 
 Optional hostname of the node. Defaults to `hostname -f`.
 
 
-### NODE_IP: optional
+### MYSQL_NODE_IP: optional
 
 Optional IP address of the node. Defaults to the IP which `hostname -i` outputs.
 
 
-### NODE_PORT: optional
+### MYSQL_NODE_PORT: optional
 
 Optional TCP/IP port of this node for cluster communication. Defaults to 3306.
 
 
-### CLUSTER_JOIN: optional
+### MYSQL_CLUSTER_JOIN: optional
 
 Comma separated list of cluster nodes to join.
 
 
 ## Cluster GTID Support
 
-### CLUSTER_ENABLE_GTID: optional
+### MYSQL_CLUSTER_ENABLE_GTID: optional
 
 Enable GTID support in the cluster.
 
-### CLUSTER_GTID_LOCAL_ID: mandatory
+### MYSQL_CLUSTER_GTID_LOCAL_ID: mandatory
 
-This must be set to a globally unique ID. It must not be the same as any CLUSTER_GTID_CLUSTER_ID.
+This must be set to a globally unique ID. It must not be the same as any MYSQL_CLUSTER_GTID_CLUSTER_ID.
 
-### CLUSTER_GTID_CLUSTER_ID: mandatory
+### MYSQL_CLUSTER_GTID_CLUSTER_ID: mandatory
 
-This must be set to a globally unique ID. It must not be the same as any CLUSTER_GTID_LOCAL_ID.
+This must be set to a globally unique ID. It must not be the same as any MYSQL_CLUSTER_GTID_LOCAL_ID.
 
 
 
