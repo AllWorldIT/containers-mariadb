@@ -50,6 +50,16 @@ eg. `MYSQL_BUFFER_SIZE=200M`
 
 
 
+# Caching
+
+
+## MYSQL_QUERY_CACHE_SIZE: optional
+
+Query cache size in MBytes.
+
+
+
+
 # Clustering
 
 

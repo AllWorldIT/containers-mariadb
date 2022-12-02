@@ -134,6 +134,18 @@ fi
 
 
 #
+# Query Cache
+#
+
+if [ -n "$MYSQL_QUERY_CACHE_SIZE" ]; then
+	query_cache_size=$((MYSQL_QUERY_CACHE_SIZE * 1024 * 1024))
+	echo "[mariadb]" > /etc/my.cnf.d/query-cache.cnf
+	echo "query_cache_size = $query_cache_size" >> /etc/my.cnf.d/query-cache.cnf
+fi
+
+
+
+#
 # Clustering
 #
 
