@@ -63,6 +63,7 @@ fi
 
 
 if [ -d /var/lib/mysql/mysql ]; then
+	echo "NOTICE: Existing database found, continuing..."
 	chown -R mysql:mysql /var/lib/mysql
 else
 	echo "NOTICE: Data directory not found, initializing..."

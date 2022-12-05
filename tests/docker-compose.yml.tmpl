@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  node1:
+    image: @@CI_IMAGE@@
+    environment:
+      - CI=cluster-node1@@WITH_GTID@@
+    volumes:
+      - ./data/node1:/var/lib/mysql
+    networks:
+      - internal
+
+  node2:
+    image: @@CI_IMAGE@@
+    environment:
+      - CI=cluster-node2@@WITH_GTID@@
+    volumes:
+      - ./data/node2:/var/lib/mysql
+    networks:
+      - internal
+
+  node3:
+    image: @@CI_IMAGE@@
+    environment:
+      - CI=cluster-node3@@WITH_GTID@@
+    volumes:
+      - ./data/node3:/var/lib/mysql
+    networks:
+      - internal
+
+
+networks:
+  internal:
+    driver: bridge
+
+# vim: filetype=yaml tabstop=2 shiftwidth=2 expandtab

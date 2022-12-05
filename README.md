@@ -124,11 +124,11 @@ Enable GTID support in the cluster.
 
 ### MYSQL_CLUSTER_GTID_LOCAL_ID: mandatory
 
-This must be set to a globally unique ID. It must not be the same as any MYSQL_CLUSTER_GTID_CLUSTER_ID.
+This must be set to a globally unique node ID. It must not be the same as any MYSQL_CLUSTER_GTID_CLUSTER_ID.
 
 ### MYSQL_CLUSTER_GTID_CLUSTER_ID: mandatory
 
-This must be set to a globally unique ID. It must not be the same as any MYSQL_CLUSTER_GTID_LOCAL_ID.
+This must be set to a globally unique node ID. It must not be the same as any MYSQL_CLUSTER_GTID_LOCAL_ID.
 
 
 

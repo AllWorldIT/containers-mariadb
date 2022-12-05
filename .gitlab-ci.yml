@@ -12,3 +12,33 @@ test:
   artifacts:
     paths:
       - .TIMESTAMP
+
+
+test-cluster:
+  stage: test
+  needs:
+    - job: test
+  script:
+    - docker pull "${CI_IMAGE}"
+    - cp -a tests "tests-${CI_COMMIT_SHORT_SHA}-${CI_CONCURRENT_ID}"
+    - cd "tests-${CI_COMMIT_SHORT_SHA}-${CI_CONCURRENT_ID}"
+    - sed -e "s,@@CI_IMAGE@@,${CI_IMAGE}," -e "s,@@WITH_GTID@@,," < docker-compose.yml.tmpl > docker-compose.yml
+    - ./run-cluster-test
+  artifacts:
+    paths:
+      - .TIMESTAMP
+
+
+test-cluster-gtid:
+  stage: test
+  needs:
+    - job: test-cluster
+  script:
+    - docker pull "${CI_IMAGE}"
+    - cp -a tests "tests-${CI_COMMIT_SHORT_SHA}-${CI_CONCURRENT_ID}-gtid"
+    - cd "tests-${CI_COMMIT_SHORT_SHA}-${CI_CONCURRENT_ID}-gtid"
+    - sed -e "s,@@CI_IMAGE@@,${CI_IMAGE}," -e "s,@@WITH_GTID@@,-gtid," < docker-compose.yml.tmpl > docker-compose.yml
+    - ./run-cluster-test
+  artifacts:
+    paths:
+      - .TIMESTAMP
