@@ -228,6 +228,7 @@ EOF
 	#
 
 	if [ -n "$MYSQL_CLUSTER_USE_GTID" ]; then
+		echo "NOTICE: Enabling GTID support"
 
 		if [ -z "$MYSQL_CLUSTER_GTID_LOCAL_ID" ]; then
 			echo "ERROR: For a GTID enabled cluster, environment variable 'MYSQL_CLUSTER_GTID_LOCAL_ID' must be provided"
