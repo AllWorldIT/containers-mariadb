@@ -118,7 +118,7 @@ Comma separated list of cluster nodes to join.
 
 ## Cluster GTID Support
 
-### MYSQL_CLUSTER_ENABLE_GTID: optional
+### MYSQL_CLUSTER_USE_GTID: optional
 
 Enable GTID support in the cluster.
 

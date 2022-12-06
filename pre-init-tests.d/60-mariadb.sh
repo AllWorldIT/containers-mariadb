@@ -12,19 +12,19 @@ export MYSQL_DATABASE=testdb
 # Check if we're doing a gtid-flavor cluster test
 if [ "$CI" = "cluster-node1-gtid" ]; then
     export CI=cluster-node1
-    export MYSQL_CLUSTER_ENABLE_GTID=yes
+    export MYSQL_CLUSTER_USE_GTID=yes
     export MYSQL_CLUSTER_GTID_LOCAL_ID=10
     export MYSQL_CLUSTER_GTID_CLUSTER_ID=100
 fi
 if [ "$CI" = "cluster-node2-gtid" ]; then
     export CI=cluster-node2
-    export MYSQL_CLUSTER_ENABLE_GTID=yes
+    export MYSQL_CLUSTER_USE_GTID=yes
     export MYSQL_CLUSTER_GTID_LOCAL_ID=20
     export MYSQL_CLUSTER_GTID_CLUSTER_ID=200
 fi
 if [ "$CI" = "cluster-node3-gtid" ]; then
     export CI=cluster-node3
-    export MYSQL_CLUSTER_ENABLE_GTID=yes
+    export MYSQL_CLUSTER_USE_GTID=yes
     export MYSQL_CLUSTER_GTID_LOCAL_ID=30
     export MYSQL_CLUSTER_GTID_CLUSTER_ID=300
 fi
