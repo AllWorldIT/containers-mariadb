@@ -137,7 +137,7 @@ RUN set -ex; \
 	cmake -L; \
 	\
 # Build
-	make VERBOSE=1 -j$(nprocs); \
+	make VERBOSE=1 -j$(nproc); \
 # Install
 	pkgdir="/build/mariadb-root"; \
 	DESTDIR="$pkgdir" cmake --install .; \
@@ -178,7 +178,7 @@ RUN set -ex; \
 	ln -s "../../mariadb-${MARIADB_VER}/wsrep-lib/wsrep-API/v${WSREP_VER}" wsrep/src; \
 # Compiler flags
 	export CFLAGS="-march=x86-64 -mtune=generic -Os -pipe -fno-plt -fexceptions -Wp,-D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -fstack-clash-protection -fcf-protection -flto=auto"; \
-	export CXXFLAGS="-Wp,-D_GLIBCXX_ASSERTIONS"; \
+	export CXXFLAGS="$CFLAGS -Wp,-D_GLIBCXX_ASSERTIONS"; \
 	export LDFLAGS="-Wl,-Os,--sort-common,--as-needed,-z,relro,-z,now -flto=auto"; \
 	\
 # Build
