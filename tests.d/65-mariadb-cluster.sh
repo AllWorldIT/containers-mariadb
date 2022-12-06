@@ -36,11 +36,13 @@ fi
 
 # If we have GTID enabled, check its set to ON
 if [ -n "$MYSQL_CLUSTER_USE_GTID" ]; then
-    gtid_support=$(echo "SHOW GLOBAL VARIABLES WHERE Variable_name = 'wsrep_gtid_mode'" | mariadb -s 2>/dev/null || true)
-    if [ "$gtid_support" != "wsrep_gtid_mode ON" ]; then
+    echo "NOTICE: Testing GTID is anbled"
+    gtid_support=$(echo "SHOW GLOBAL VARIABLES WHERE Variable_name = 'wsrep_gtid_mode'" | mariadb -s 2>/dev/null | awk '{ print $2 }' || true )
+    if [ "$gtid_support" != "ON" ]; then
         echo "ERROR: GTID support does not seem to be enabled! result='$gtid_support'"
         exit 1
     fi
+    echo "NOTICE: GTID is enabled!"
 fi
 
 
