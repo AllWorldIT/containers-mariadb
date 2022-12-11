@@ -149,6 +149,7 @@ RUN set -ex; \
 		"$pkgdir"/usr/bin/mariadb_config \
 		"$pkgdir"/usr/bin/mysql_config \
 		"$pkgdir"/usr/include \
+		"$pkgdir"/usr/share/man \
 		"$pkgdir"/usr/lib/$pkgname/plugin/dialog.so \
 		"$pkgdir"/usr/lib/$pkgname/plugin/mysql_clear_password.so \
 		"$pkgdir"/usr/lib/$pkgname/plugin/sha256_password.so \
