@@ -7,7 +7,7 @@ FROM registry.gitlab.iitsp.com/allworldit/docker/alpine/v3.17:latest as builder
 
 
 ENV MARIADB_VER=10.10.2
-ENV GALERA_VER=26.4.12
+ENV GALERA_VER=26.4.13
 ENV WSREP_VER=26
 
 
