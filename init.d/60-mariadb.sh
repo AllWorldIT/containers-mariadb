@@ -278,6 +278,13 @@ EOF
 fi
 
 
+# Write out /root/.my.cnf with root password for below and healthcheck
+cat <<EOF > /root/.my.cnf
+[client]
+password=$MYSQL_ROOT_PASSWORD
+EOF
+
+
 #
 # Database upgrade
 #
@@ -304,6 +311,4 @@ if [ -n "$DB_VERSION_OLD" -a "${DB_VERSION_OLD%-log}" != "${DB_VERSION_NEW%-log}
 
 	# Stop database
 	wait_for_shutdown "$mariadb_pid"
-
-	rm -f /root/.my.cnf
 fi
