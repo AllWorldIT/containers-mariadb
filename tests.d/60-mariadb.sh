@@ -13,7 +13,7 @@ function wait_for_startup() {
 	done
 	if [ "$i" = 0 ]; then
 		echo "ERROR: Database start failed!"
-		exit 1
+		false
 	fi
 }
 

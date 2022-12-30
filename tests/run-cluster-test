@@ -2,25 +2,26 @@
 
 
 function check_tests() {
-    test_file=$1
-
     i=120
     while [ "$i" -gt 0 ]; do
         i=$((i-1))
-        if [ -e "data/node1/$test_file" ]; then
-            echo "PASSED: Test $test_file on node1"
-        fi
-        if [ -e "data/node2/$test_file" ]; then
-            echo "PASSED: Test $test_file on node2"
-        fi
-        if [ -e "data/node3/$test_file" ]; then
-            echo "PASSED: Test $test_file on node3"
-        fi
-        if [ -e "data/node1/$test_file" -a -e "data/node2/$test_file" -a -e "data/node3/$test_file" ]; then
-            echo "PASSED: PASSED ALL NODES => $test_file"
+
+        echo "INFO: Waiting for tests to pass... ${i}s"
+
+        for node in 1 2 3; do
+            if docker-compose exec "node$node" test -e /PASSED; then
+                echo "PASSED:   - Tests passed on node$node"
+                FAILED=
+            else
+                FAILED=yes
+            fi
+        done
+
+        if [ -z "$FAILED" ]; then
+            echo "PASSED:   - PASSED ALL NODES"
             break
         fi
-        echo "INFO: Waiting for tests to pass ($test_file)... ${i}s"
+
         sleep 1
     done
 
@@ -43,29 +44,16 @@ mkdir -p data/node1 data/node2 data/node3
 # Run in background so we can see the output
 docker-compose up --remove-orphans &
 
-# This is run within a very minimal environment, we don't have access to using for i in {180..0} or for ((xxxxxx))
-test1_passed=
-test2_passed=
-test3_passed=
-if check_tests MARIADB_CI_PASSED1; then
-    echo "NOTICE: Default test set PASSED"
-    test1_passed=1
-    if check_tests MARIADB_CI_PASSED2; then
-        echo "NOTICE: Node 2 test set PASSED"
-        test2_passed=1
-        if check_tests MARIADB_CI_PASSED3; then
-            echo "NOTICE: Node 3 test set PASSED"
-            test3_passed=1
-        fi
-    fi
+# Check if our tests passed
+if check_tests; then
+    TESTS_PASSED=yes
 fi
-
 
 echo "NOTICE: Shutting down cluster"
 docker-compose down --remove-orphans --volumes
 
 
-if [ -z "$test1_passed" -o -z "$test2_passed" -o -z "$test3_passed" ]; then
+if [ -z "$TESTS_PASSED" ]; then
 	echo "ERROR: Cluster test failed!"
 	exit 1
 fi

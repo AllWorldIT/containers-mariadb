@@ -30,7 +30,7 @@ echo "NOTICE: Testing default setup"
 # Wait for success and touch passed file if it did
 if wait_for_success testdb testtable value SUCCESS; then
     echo "NOTICE: Database content for testdb is correct, tests passed!"
-    touch /var/lib/mysql/MARIADB_CI_PASSED1
+    echo "PASSED" > /PASSED
 fi
 
 
@@ -56,7 +56,7 @@ fi
 # Wait for success and touch passed file if it did
 if wait_for_success testdb2 testtable value SUCCESS; then
     echo "NOTICE: Database content for testdb2 is correct, tests passed!"
-    touch /var/lib/mysql/MARIADB_CI_PASSED2
+    echo "PASSED" > /PASSED
 fi
 
 
@@ -71,7 +71,7 @@ fi
 # Wait for success and touch passed file if it did
 if wait_for_success testdb3 testtable value SUCCESS; then
     echo "NOTICE: Database content for testdb3 is correct, tests passed!"
-    touch /var/lib/mysql/MARIADB_CI_PASSED3
+    echo "PASSED" > /PASSED
 fi
 
 
