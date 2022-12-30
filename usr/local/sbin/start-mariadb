@@ -1,10 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
 # Next thing we do is check if we're bootstraping this node
-ARGS=
+ARGS=()
 if [ -e /var/lib/mysql/bootstrap-cluster ]; then
 	echo "NOTICE: Bootstrapping cluster from this node!"
-	ARGS=--wsrep-new-cluster
+	ARGS+=(--wsrep-new-cluster)
 	rm -f /var/lib/mysql/bootstrap-cluster
 fi
 if [ -e /var/lib/mysql/force-bootstrap-cluster ]; then
@@ -13,4 +13,4 @@ if [ -e /var/lib/mysql/force-bootstrap-cluster ]; then
 	rm -f /var/lib/mysql/force-bootstrap-cluster
 fi
 
-exec /usr/bin/mariadbd "$@" $ARGS
+exec /usr/bin/mariadbd "$@" "${ARGS[@]}"
