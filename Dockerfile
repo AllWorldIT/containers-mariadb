@@ -254,10 +254,10 @@ RUN set -ex; \
 COPY etc/my.cnf /etc/my.cnf
 COPY etc/my.cnf.d/docker.cnf /etc/my.cnf.d/docker.cnf
 COPY etc/supervisor/conf.d/mariadb.conf /etc/supervisor/conf.d/mariadb.conf
-COPY bin/healthcheck /usr/bin/healthcheck
 COPY bin/mariadbd-starter /usr/bin/mariadbd-starter
 COPY init.d/60-mariadb.sh /docker-entrypoint-init.d/60-mariadb.sh
 COPY pre-init-tests.d/60-mariadb.sh /docker-entrypoint-pre-init-tests.d/60-mariadb.sh
+COPY healthcheck.d/60-mariadb.sh /docker-healthcheck.d/60-mariadb.sh
 COPY tests.d/60-mariadb.sh /docker-entrypoint-tests.d/60-mariadb.sh
 COPY tests.d/65-mariadb-cluster.sh /docker-entrypoint-tests.d/65-mariadb-cluster.sh
 RUN set -ex; \
@@ -265,10 +265,10 @@ RUN set -ex; \
 		/etc/my.cnf \
 		/etc/my.cnf.d/docker.cnf \
 		/etc/supervisor/conf.d/mariadb.conf \
-		/usr/bin/healthcheck \
 		/usr/bin/mariadbd-starter \
 		/docker-entrypoint-init.d/60-mariadb.sh \
 		/docker-entrypoint-pre-init-tests.d/60-mariadb.sh \
+		/docker-healthcheck.d/60-mariadb.sh \
 		/docker-entrypoint-tests.d/60-mariadb.sh \
 		/docker-entrypoint-tests.d/65-mariadb-cluster.sh; \
 	chmod 0644 \
@@ -276,16 +276,13 @@ RUN set -ex; \
 		/etc/my.cnf.d/docker.cnf \
 		/etc/supervisor/conf.d/mariadb.conf; \
 	chmod 0755 \
-		/usr/bin/healthcheck \
 		/usr/bin/mariadbd-starter \
 		/docker-entrypoint-init.d/60-mariadb.sh \
 		/docker-entrypoint-pre-init-tests.d/60-mariadb.sh \
+		/docker-healthcheck.d/60-mariadb.sh \
 		/docker-entrypoint-tests.d/60-mariadb.sh \
 		/docker-entrypoint-tests.d/65-mariadb-cluster.sh
 
 VOLUME ["/var/lib/mysql"]
 
 EXPOSE 3306
-
-HEALTHCHECK CMD healthcheck || exit 1
-
