@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright (c) 2022-2023, AllWorldIT.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -18,33 +19,11 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-version: '3.9'
 
-services:
-  node1:
-    image: @@PIPELINE_IMAGE@@
-    environment:
-      - FDC_CI=cluster-node1@@WITH_GTID@@
-    networks:
-      - internal
-
-  node2:
-    image: @@PIPELINE_IMAGE@@
-    environment:
-      - FDC_CI=cluster-node2@@WITH_GTID@@
-    networks:
-      - internal
-
-  node3:
-    image: @@PIPELINE_IMAGE@@
-    environment:
-      - FDC_CI=cluster-node3@@WITH_GTID@@
-    networks:
-      - internal
-
-
-networks:
-  internal:
-    driver: bridge
-
-# vim: filetype=yaml tabstop=2 shiftwidth=2 expandtab
+if ! MARIADB_TEST_RESULT=$(mariadb-admin ping 2>&1); then
+    echo -e "ERROR: Healthcheck failed for MariaDB:\n$MARIADB_TEST_RESULT"
+    false
+fi
+if [ -n "$CI" ]; then
+    echo -e "INFO: Healthcheck for MariaDB:\n$MARIADB_TEST_RESULT"
+fi

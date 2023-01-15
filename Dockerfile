@@ -1,9 +1,30 @@
+# Copyright (c) 2022-2023, AllWorldIT.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+
+
 #
 # We use a builder to build mariadb
 #
 
 
-FROM registry.gitlab.iitsp.com/allworldit/docker/alpine/v3.17:latest as builder
+FROM registry.conarx.tech/containers/alpine/3.17:latest as builder
 
 
 ENV MARIADB_VER=10.10.2
@@ -33,7 +54,7 @@ RUN set -ex; \
 		bzip2-dev zstd-dev lz4-dev lzo-dev snappy-dev jemalloc-dev asio-dev check-dev
 
 
-# Download packages
+# Download MariaDB and Galera tarballs
 RUN set -ex; \
 	mkdir -p build; \
 	cd build; \
@@ -41,6 +62,7 @@ RUN set -ex; \
 	wget "https://github.com/codership/galera/archive/release_${GALERA_VER}.tar.gz" -O "galera-${GALERA_VER}.tar.gz"; \
 	tar -xf "mariadb-${MARIADB_VER}.tar.gz"; \
 	tar -xf "galera-${GALERA_VER}.tar.gz"
+
 
 # Build and install MariaDB
 RUN set -ex; \
@@ -137,7 +159,7 @@ RUN set -ex; \
 	cmake -L; \
 	\
 # Build
-	make VERBOSE=1 -j$(nproc); \
+	make VERBOSE=1 -j$(nproc) -l 8; \
 # Install
 	pkgdir="/build/mariadb-root"; \
 	DESTDIR="$pkgdir" cmake --install .; \
@@ -171,7 +193,7 @@ RUN set -ex; \
 # Patch
 	patch -p1 < ../patches/galera-musl-page-size.patch; \
 	patch -p1 < ../patches/galera-musl-sched_param.patch; \
-# 26.4.13
+# NK: Below patch is for 26.4.13
 #	patch -p1 < ../patches/galera-musl-sys-poll-h.patch; \
 	patch -p1 < ../patches/galera-musl-wordsize.patch; \
 # Remove for 26.4.13
@@ -186,7 +208,7 @@ RUN set -ex; \
 	\
 # Build
 	cmake .; \
-	make VERBOSE=1 -j$(nprocs); \
+	make VERBOSE=1 -j$(nprocs) -l 8; \
 # Install
 	pkgdir="/build/mariadb-root"; \
 	mkdir -p "$pkgdir"/usr/lib/galera; \
@@ -206,15 +228,20 @@ RUN set -ex; \
 			--strip-unneeded
 
 
+
 #
 # Build the actual image
 #
 
 
-FROM registry.gitlab.iitsp.com/allworldit/docker/alpine/v3.17:latest
+FROM registry.conarx.tech/containers/alpine/3.17:latest
+
 
 ARG VERSION_INFO=
-LABEL maintainer="Nigel Kukard <nkukard@lbsd.net>"
+LABEL org.opencontainers.image.authors   = "Nigel Kukard <nkukard@conarx.tech>"
+LABEL org.opencontainers.image.version   = "3.17"
+LABEL org.opencontainers.image.base.name = "registry.conarx.tech/containers/alpine/3.17"
+
 
 # Copy in built binaries
 COPY --from=builder /build/mariadb-root /
@@ -224,7 +251,6 @@ RUN set -ex; \
 	true "Install requirements"; \
 # NK: These are critical for some tools to work correctly
 	apk add --no-cache coreutils rsync socat procps pv pwgen; \
-	apk add --no-cache syslog-ng; \
 	apk add --no-cache \
 		libaio libssl3 libcrypto3 pcre2 snappy zstd-libs libxml2 nghttp2-libs ncurses-libs lzo xz-libs lz4-libs libcurl \
 		libbz2 brotli-libs; \
@@ -232,56 +258,39 @@ RUN set -ex; \
 	addgroup -S mysql 2>/dev/null; \
 	adduser -S -D -h /var/lib/mysql -s /sbin/nologin -G mysql -g mysql mysql 2>/dev/null; \
 	true "Create initdb dirs"; \
-	mkdir /docker-entrypoint-initdb.d; \
-	chmod 750 /docker-entrypoint-initdb.d; \
-	true "Versioning"; \
-	if [ -n "$VERSION_INFO" ]; then echo "$VERSION_INFO" >> /.VERSION_INFO; fi; \
+	mkdir /var/lib/mysql-initdb.d; \
 	true "Cleanup"; \
 	rm -f /var/cache/apk/*
 
-# Syslog-ng (for logging of syslog to stdout/stderr to docker)
-COPY etc/syslog-ng/syslog-ng.conf /etc/syslog-ng/syslog-ng.conf
-COPY etc/supervisor/conf.d/syslog-ng.conf /etc/supervisor/conf.d/syslog-ng.conf
-RUN set -ex; \
-	chown root:root \
-		/etc/syslog-ng/syslog-ng.conf \
-		/etc/supervisor/conf.d/syslog-ng.conf; \
-	chmod 0644 \
-		/etc/syslog-ng/syslog-ng.conf \
-		/etc/supervisor/conf.d/syslog-ng.conf
 
 # MariaDB
-COPY etc/my.cnf /etc/my.cnf
-COPY etc/my.cnf.d/docker.cnf /etc/my.cnf.d/docker.cnf
-COPY etc/supervisor/conf.d/mariadb.conf /etc/supervisor/conf.d/mariadb.conf
-COPY usr/local/sbin/start-mariadb /usr/local/sbin/start-mariadb
-COPY init.d/60-mariadb.sh /docker-entrypoint-init.d/60-mariadb.sh
-COPY pre-init-tests.d/60-mariadb.sh /docker-entrypoint-pre-init-tests.d/60-mariadb.sh
-COPY healthcheck.d/60-mariadb.sh /docker-healthcheck.d/60-mariadb.sh
-COPY tests.d/60-mariadb.sh /docker-entrypoint-tests.d/60-mariadb.sh
-COPY tests.d/65-mariadb-cluster.sh /docker-entrypoint-tests.d/65-mariadb-cluster.sh
+COPY etc/my.cnf /etc
+COPY etc/my.cnf.d/10_fdc_defaults.cnf /etc/my.cnf.d
+COPY etc/supervisor/conf.d/mariadb.conf /etc/supervisor/conf.d
+COPY usr/local/sbin/start-mariadb /usr/local/sbin
+COPY usr/local/share/flexible-docker-containers/init.d/42-mariadb.sh /usr/local/share/flexible-docker-containers/init.d
+COPY usr/local/share/flexible-docker-containers/pre-init-tests.d/42-mariadb.sh /usr/local/share/flexible-docker-containers/pre-init-tests.d
+COPY usr/local/share/flexible-docker-containers/healthcheck.d/42-mariadb.sh /usr/local/share/flexible-docker-containers/healthcheck.d
+COPY usr/local/share/flexible-docker-containers/tests.d/42-mariadb.sh /usr/local/share/flexible-docker-containers/tests.d
+COPY usr/local/share/flexible-docker-containers/tests.d/43-mariadb-cluster.sh /usr/local/share/flexible-docker-containers/tests.d
 RUN set -ex; \
+	true "Flexible Docker Containers"; \
+	if [ -n "$VERSION_INFO" ]; then echo "$VERSION_INFO" >> /.VERSION_INFO; fi; \
 	chown root:root \
 		/etc/my.cnf \
-		/etc/my.cnf.d/docker.cnf \
-		/etc/supervisor/conf.d/mariadb.conf \
-		/usr/local/sbin/start-mariadb \
-		/docker-entrypoint-init.d/60-mariadb.sh \
-		/docker-entrypoint-pre-init-tests.d/60-mariadb.sh \
-		/docker-healthcheck.d/60-mariadb.sh \
-		/docker-entrypoint-tests.d/60-mariadb.sh \
-		/docker-entrypoint-tests.d/65-mariadb-cluster.sh; \
+		/etc/my.cnf.d/10_fdc_defaults.cnf \
+		/var/lib/mysql-initdb.d \
+		/usr/local/sbin/start-mariadb; \
 	chmod 0644 \
 		/etc/my.cnf \
-		/etc/my.cnf.d/docker.cnf \
-		/etc/supervisor/conf.d/mariadb.conf; \
+		/etc/my.cnf.d/10_fdc_defaults.cnf; \
 	chmod 0755 \
-		/usr/local/sbin/start-mariadb \
-		/docker-entrypoint-init.d/60-mariadb.sh \
-		/docker-entrypoint-pre-init-tests.d/60-mariadb.sh \
-		/docker-healthcheck.d/60-mariadb.sh \
-		/docker-entrypoint-tests.d/60-mariadb.sh \
-		/docker-entrypoint-tests.d/65-mariadb-cluster.sh
+		/usr/local/sbin/start-mariadb; \
+	chmod 750 \
+		/var/lib/mysql-initdb.d; \
+	fdc set-perms
+
+
 
 VOLUME ["/var/lib/mysql"]
 

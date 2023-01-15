@@ -1,16 +1,36 @@
 #!/bin/bash
+# Copyright (c) 2022-2023, AllWorldIT.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+
 
 # Next thing we do is check if we're bootstraping this node
 ARGS=()
-if [ -e /var/lib/mysql/bootstrap-cluster ]; then
-	echo "NOTICE: Bootstrapping cluster from this node!"
+if [ -e /var/lib/mysql/.bootstrap-cluster ]; then
+	echo "NOTICE: Bootstrapping MariaDB cluster from this node!"
 	ARGS+=(--wsrep-new-cluster)
-	rm -f /var/lib/mysql/bootstrap-cluster
+	rm -f /var/lib/mysql/.bootstrap-cluster
 fi
-if [ -e /var/lib/mysql/force-bootstrap-cluster ]; then
-	echo "NOTICE: Forcing bootstrapping cluster from this node!"
+if [ -e /var/lib/mysql/.force-bootstrap-cluster ]; then
+	echo "NOTICE: Forcing bootstrapping MariaDB cluster from this node!"
 	sed -i -e 's,safe_to_bootstrap: 0,safe_to_bootstrap: 1,' /var/lib/mysql/grastate.dat
-	rm -f /var/lib/mysql/force-bootstrap-cluster
+	rm -f /var/lib/mysql/.force-bootstrap-cluster
 fi
 
 exec /usr/bin/mariadbd "$@" "${ARGS[@]}"

@@ -19,23 +19,27 @@
 ; IN THE SOFTWARE.
 
 
-; This group is read both both by the client and the server
-; use it for options that affect everything
-[client-server]
+[mariadbd]
+; File per table
+innodb-file-per-table
 
-; This group is read by the server
-[mysqld]
+innodb-buffer-pool-size=64M
+innodb_flush_method=O_DIRECT
 
-; Bind to IPv4 and IPv6
-bind_address = ::
+net-write-timeout=6000
+net-read-timeout=6000
 
-; Disabling symbolic-links is recommended to prevent assorted security risks
-symbolic-links = 0
+max-allowed-packet=128M
 
-; Set safe tmpdir
-tmpdir = /var/tmp/mysqld
+; Strict mode so we don't silently ignore some kinds of errors
+sql-mode=STRICT_ALL_TABLES
 
-; Include all files from the config directory
-!includedir /etc/my.cnf.d
+; Listen on port 3306
+bind-address = *
 
-; NK: We need 2 lines after the above statement, or it results in errors about /etc/my.cnf.???
+; Clustering variables, set to reasonable defaults
+wsrep_provider = /usr/lib/galera/libgalera_smm.so
+wsrep_sst_method = mariabackup
+
+[mariadb-dump]
+max-allowed-packet=1G

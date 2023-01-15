@@ -1,15 +1,34 @@
 #!/bin/sh
+# Copyright (c) 2022-2023, AllWorldIT.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
 
 
 function check_tests() {
-    i=120
+    i=300
     while [ "$i" -gt 0 ]; do
         i=$((i-1))
 
         echo "INFO: Waiting for tests to pass... ${i}s"
 
         for node in 1 2 3; do
-            if docker-compose exec "node$node" test -e /PASSED; then
+            if docker-compose exec "node$node" test -e /PASSED_MARIADB; then
                 echo "PASSED:   - Tests passed on node$node"
                 FAILED=
             else
@@ -29,17 +48,10 @@ function check_tests() {
         return 1
     fi
 
-    return 0
+    return
 }
 
 
-
-[ -d data/node1 ] && rm -rf data/node1
-[ -d data/node2 ] && rm -rf data/node2
-[ -d data/node3 ] && rm -rf data/node3
-
-
-mkdir -p data/node1 data/node2 data/node3
 
 # Run in background so we can see the output
 docker-compose up --remove-orphans &
@@ -49,13 +61,13 @@ if check_tests; then
     TESTS_PASSED=yes
 fi
 
-echo "NOTICE: Shutting down cluster"
+echo "NOTICE: Shutting down MariaDB cluster"
 docker-compose down --remove-orphans --volumes
 
 
 if [ -z "$TESTS_PASSED" ]; then
-	echo "ERROR: Cluster test failed!"
+	echo "ERROR: MariaDB cluster test failed!"
 	exit 1
 fi
 
-echo "ALL TESTS PASSED!"
+echo "ALL CLUSTER TESTS PASSED!"
