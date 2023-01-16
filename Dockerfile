@@ -24,7 +24,7 @@
 #
 
 
-FROM registry.conarx.tech/containers/alpine/3.17:latest as builder
+FROM registry.conarx.tech/containers/alpine/3.17 as builder
 
 
 ENV MARIADB_VER=10.10.2
@@ -234,12 +234,12 @@ RUN set -ex; \
 #
 
 
-FROM registry.conarx.tech/containers/alpine/3.17:latest
+FROM registry.conarx.tech/containers/alpine/3.17
 
 
 ARG VERSION_INFO=
 LABEL org.opencontainers.image.authors   = "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   = "3.17"
+LABEL org.opencontainers.image.version   = "3.17+10.10"
 LABEL org.opencontainers.image.base.name = "registry.conarx.tech/containers/alpine/3.17"
 
 
