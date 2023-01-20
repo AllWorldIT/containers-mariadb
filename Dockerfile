@@ -273,6 +273,7 @@ COPY usr/local/share/flexible-docker-containers/pre-init-tests.d/42-mariadb.sh /
 COPY usr/local/share/flexible-docker-containers/healthcheck.d/42-mariadb.sh /usr/local/share/flexible-docker-containers/healthcheck.d
 COPY usr/local/share/flexible-docker-containers/tests.d/42-mariadb.sh /usr/local/share/flexible-docker-containers/tests.d
 COPY usr/local/share/flexible-docker-containers/tests.d/43-mariadb-cluster.sh /usr/local/share/flexible-docker-containers/tests.d
+COPY usr/local/share/flexible-docker-containers/tests.d/99-mariadb-cluster.sh /usr/local/share/flexible-docker-containers/tests.d
 RUN set -ex; \
 	true "Flexible Docker Containers"; \
 	if [ -n "$VERSION_INFO" ]; then echo "$VERSION_INFO" >> /.VERSION_INFO; fi; \
