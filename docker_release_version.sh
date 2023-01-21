@@ -20,55 +20,8 @@
 # IN THE SOFTWARE.
 
 
-check_tests() {
-	i=300
-	while [ "$i" -gt 0 ]; do
-		i=$((i-1))
+set -e
 
-		echo "INFO: Waiting for MariaDB tests to pass... ${i}s"
+MARIADB_VERSION=$(grep "ENV MARIADB_VER" Dockerfile | sed -e 's/ENV MARIADB_VER=//')
 
-		for node in 1 2 3; do
-			if docker-compose exec "node$node" test -e /PASSED_MARIADB; then
-				echo "PASSED:   - Tests passed on node$node"
-				FAILED=
-			else
-				FAILED=yes
-			fi
-		done
-
-		if [ -z "$FAILED" ]; then
-			echo "PASSED:   - PASSED ALL NODES"
-			break
-		fi
-
-		sleep 1
-	done
-
-	if [ "$i" = 0 ]; then
-		return 1
-	fi
-
-	return
-}
-
-
-echo "NOTICE: Starting MariaDB test cluster"
-
-# Run in background so we can see the output
-docker-compose up --remove-orphans &
-
-# Check if our tests passed
-if check_tests; then
-	TESTS_PASSED=yes
-fi
-
-echo "NOTICE: Shutting down MariaDB test cluster"
-docker-compose down --remove-orphans --volumes
-
-
-if [ -z "$TESTS_PASSED" ]; then
-	echo "ERROR: MariaDB clustering tests failed!"
-	exit 1
-fi
-
-echo "ALL MARIADB CLUSTER TESTS PASSED!"
+export CONTAINER_VERSION_EXTRA="$MARIADB_VERSION"
