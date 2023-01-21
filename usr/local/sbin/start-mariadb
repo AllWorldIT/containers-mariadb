@@ -20,6 +20,8 @@
 # IN THE SOFTWARE.
 
 
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
 # Next thing we do is check if we're bootstraping this node
 ARGS=()
 if [ -e /var/lib/mysql/.bootstrap-cluster ]; then

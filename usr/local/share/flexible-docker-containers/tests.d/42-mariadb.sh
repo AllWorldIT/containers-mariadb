@@ -24,15 +24,15 @@
 function wait_for_startup() {
 	for i in {240..0}; do
 		got_value=$(echo "SELECT 1;" | mariadb -s 2>&1) || true
-		echo "TEST PROGRESS (mariadb): Got\n$got_value"
+		fdc_test_progress mariadb "Got\n$got_value"
 		if [ "$got_value" = "1" ]; then
 			break
 		fi
-		echo "TEST PROGRESS (mariadb): Waiting for database start... ${i}s"
+		fdc_test_progress mariadb "Waiting for database start... ${i}s"
 		sleep 1
 	done
 	if [ "$i" = 0 ]; then
-		echo "TEST FAILED (mariadb): Database start failed!"
+		fdc_test_fail mariadb "Database start failed!"
 		return 1
 	fi
 	return
@@ -41,8 +41,8 @@ function wait_for_startup() {
 
 # For normal tests we use the mysql username/password
 if [ "$FDC_CI" = "true" ]; then
-    # Setup database credentials
-    cat <<EOF > /root/.my.cnf
+	# Setup database credentials
+	cat <<EOF > /root/.my.cnf
 [mysql]
 user=$MYSQL_USER
 password=$MYSQL_PASSWORD
@@ -53,9 +53,9 @@ EOF
 fi
 
 # For cluster testing as we create more than one database, we use root details
-if [ "$FDC_CI" = "cluster-node1" -o "$FDC_CI" = "cluster-node2" -o "$FDC_CI" = "cluster-node3" ]; then
-    # Setup database credentials
-    cat <<EOF > /root/.my.cnf
+if [ "$FDC_CI" = "cluster-node1" ] || [ "$FDC_CI" = "cluster-node2" ] || [ "$FDC_CI" = "cluster-node3" ]; then
+	# Setup database credentials
+	cat <<EOF > /root/.my.cnf
 [mysql]
 user=root
 password=$MYSQL_ROOT_PASSWORD
@@ -67,17 +67,25 @@ fi
 
 
 # Wait for database startup
-echo "TEST START (mariadb): Wait for startup..."
+echo fdc_test_start mariadb "Wait for startup"
 wait_for_startup
-echo "TEST PASSED (mariadb): Database started"
+echo fdc_test_pass mariadb "Database started"
 
 # Only create the database for normal tests and cluster node1
-[ "$FDC_CI" != "true" -a "$FDC_CI" != "cluster-node1" ] && return
+if [ "$FDC_CI" != "true" ] && [ "$FDC_CI" != "cluster-node1" ]; then
+	return
+fi
 
-echo "TEST START (mariadb): Test create table..."
-echo "CREATE TABLE testtable (id INT AUTO_INCREMENT PRIMARY KEY, value TEXT);" | mariadb -v testdb
-echo "TEST PASSED (mariadb): Test table created"
+fdc_test_start mariadb "Test create table"
+if ! echo "CREATE TABLE testtable (id INT AUTO_INCREMENT PRIMARY KEY, value TEXT);" | mariadb -v testdb; then
+	fdc_test_fail mariadb "Failed to create table"
+	false
+fi
+fdc_test_pass mariadb "Test table created"
 
-echo "TEST START (mariadb): Test insert into table..."
-echo "INSERT INTO testtable (value) VALUES ('SUCCESS');" | mariadb -v testdb
-echo "TEST PASSED (mariadb): Test insert done"
+fdc_test_start mariadb "Test insert into table"
+if ! echo "INSERT INTO testtable (value) VALUES ('SUCCESS');" | mariadb -v testdb; then
+	fdc_test_fail mariadb "Failed to insert into table"
+	false
+fi
+fdc_test_pass mariadb "Test insert done"
