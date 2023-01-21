@@ -31,42 +31,42 @@ export MYSQL_DATABASE=testdb
 
 # Check if we're doing a gtid-flavor cluster test
 if [ "$FDC_CI" = "cluster-node1-gtid" ]; then
-    export FDC_CI=cluster-node1
-    export MYSQL_CLUSTER_USE_GTID=yes
-    export MYSQL_CLUSTER_GTID_LOCAL_ID=10
-    export MYSQL_CLUSTER_GTID_CLUSTER_ID=100
+	export FDC_CI=cluster-node1
+	export MYSQL_CLUSTER_USE_GTID=yes
+	export MYSQL_CLUSTER_GTID_LOCAL_ID=10
+	export MYSQL_CLUSTER_GTID_CLUSTER_ID=100
 fi
 if [ "$FDC_CI" = "cluster-node2-gtid" ]; then
-    export FDC_CI=cluster-node2
-    export MYSQL_CLUSTER_USE_GTID=yes
-    export MYSQL_CLUSTER_GTID_LOCAL_ID=20
-    export MYSQL_CLUSTER_GTID_CLUSTER_ID=200
+	export FDC_CI=cluster-node2
+	export MYSQL_CLUSTER_USE_GTID=yes
+	export MYSQL_CLUSTER_GTID_LOCAL_ID=20
+	export MYSQL_CLUSTER_GTID_CLUSTER_ID=200
 fi
 if [ "$FDC_CI" = "cluster-node3-gtid" ]; then
-    export FDC_CI=cluster-node3
-    export MYSQL_CLUSTER_USE_GTID=yes
-    export MYSQL_CLUSTER_GTID_LOCAL_ID=30
-    export MYSQL_CLUSTER_GTID_CLUSTER_ID=300
+	export FDC_CI=cluster-node3
+	export MYSQL_CLUSTER_USE_GTID=yes
+	export MYSQL_CLUSTER_GTID_LOCAL_ID=30
+	export MYSQL_CLUSTER_GTID_CLUSTER_ID=300
 fi
 
 
 if [ "$FDC_CI" = "cluster-node1" ]; then
-    export MYSQL_CLUSTER_NODE_NAME=node1
-    export MYSQL_CLUSTER_JOIN=node1,node2,node3
-    export _MYSQL_CLUSTER_BOOTSTRAP=yes
-    export _MYSQL_CLUSTER_BOOTSTRAP_FORCE=yes
+	export MYSQL_CLUSTER_NODE_NAME=node1
+	export MYSQL_CLUSTER_JOIN=node1,node2,node3
+	export _MYSQL_CLUSTER_BOOTSTRAP=yes
+	export _MYSQL_CLUSTER_BOOTSTRAP_FORCE=yes
 fi
 
 if [ "$FDC_CI" = "cluster-node2" ]; then
-    export MYSQL_CLUSTER_NODE_NAME=node2
-    export MYSQL_CLUSTER_JOIN=node1,node2,node3
-    # NK: We need to stagger startups or we get duplicate uuid's ... wtf
-    sleep 5
+	export MYSQL_CLUSTER_NODE_NAME=node2
+	export MYSQL_CLUSTER_JOIN=node1,node2,node3
+	# NK: We need to stagger startups or we get duplicate uuid's ... wtf
+	sleep 5
 fi
 
 if [ "$FDC_CI" = "cluster-node3" ]; then
-    export MYSQL_CLUSTER_NODE_NAME=node3
-    export MYSQL_CLUSTER_JOIN=node1,node2,node3
-    # NK: We need to stagger startups or we get duplicate uuid's ... wtf
-    sleep 10
+	export MYSQL_CLUSTER_NODE_NAME=node3
+	export MYSQL_CLUSTER_JOIN=node1,node2,node3
+	# NK: We need to stagger startups or we get duplicate uuid's ... wtf
+	sleep 10
 fi

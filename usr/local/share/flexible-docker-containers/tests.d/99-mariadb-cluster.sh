@@ -22,7 +22,7 @@
 
 # We only run this test for cluster nodes
 if [ "$FDC_CI" != "cluster-node1" ] && [ "$FDC_CI" != "cluster-node2" ] && [ "$FDC_CI" != "cluster-node3" ]; then
-    return
+	return
 fi
 
 echo "PASSED" > /PASSED_MARIADB
