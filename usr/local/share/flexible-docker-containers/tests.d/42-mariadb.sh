@@ -41,8 +41,8 @@ function wait_for_startup() {
 
 # For normal tests we use the mysql username/password
 if [ "$FDC_CI" = "true" ]; then
-    # Setup database credentials
-    cat <<EOF > /root/.my.cnf
+	# Setup database credentials
+	cat <<EOF > /root/.my.cnf
 [mysql]
 user=$MYSQL_USER
 password=$MYSQL_PASSWORD
@@ -54,8 +54,8 @@ fi
 
 # For cluster testing as we create more than one database, we use root details
 if [ "$FDC_CI" = "cluster-node1" ] || [ "$FDC_CI" = "cluster-node2" ] || [ "$FDC_CI" = "cluster-node3" ]; then
-    # Setup database credentials
-    cat <<EOF > /root/.my.cnf
+	# Setup database credentials
+	cat <<EOF > /root/.my.cnf
 [mysql]
 user=root
 password=$MYSQL_ROOT_PASSWORD
