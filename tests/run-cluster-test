@@ -21,34 +21,34 @@
 
 
 check_tests() {
-    i=300
-    while [ "$i" -gt 0 ]; do
-        i=$((i-1))
+	i=300
+	while [ "$i" -gt 0 ]; do
+		i=$((i-1))
 
-        echo "INFO: Waiting for MariaDB tests to pass... ${i}s"
+		echo "INFO: Waiting for MariaDB tests to pass... ${i}s"
 
-        for node in 1 2 3; do
-            if docker-compose exec "node$node" test -e /PASSED_MARIADB; then
-                echo "PASSED:   - Tests passed on node$node"
-                FAILED=
-            else
-                FAILED=yes
-            fi
-        done
+		for node in 1 2 3; do
+			if docker-compose exec "node$node" test -e /PASSED_MARIADB; then
+				echo "PASSED:   - Tests passed on node$node"
+				FAILED=
+			else
+				FAILED=yes
+			fi
+		done
 
-        if [ -z "$FAILED" ]; then
-            echo "PASSED:   - PASSED ALL NODES"
-            break
-        fi
+		if [ -z "$FAILED" ]; then
+			echo "PASSED:   - PASSED ALL NODES"
+			break
+		fi
 
-        sleep 1
-    done
+		sleep 1
+	done
 
-    if [ "$i" = 0 ]; then
-        return 1
-    fi
+	if [ "$i" = 0 ]; then
+		return 1
+	fi
 
-    return
+	return
 }
 
 
@@ -59,7 +59,7 @@ docker-compose up --remove-orphans &
 
 # Check if our tests passed
 if check_tests; then
-    TESTS_PASSED=yes
+	TESTS_PASSED=yes
 fi
 
 echo "NOTICE: Shutting down MariaDB test cluster"
