@@ -22,7 +22,7 @@
 
 # We apply the same settings to all instances regardless of the test we're running
 
-echo "NOTICE: Setting up MariaDB CI test configuration..."
+fdc_notice "Setting up MariaDB CI test configuration..."
 
 export MYSQL_USER=testuser
 export MYSQL_PASSWORD=testpass
