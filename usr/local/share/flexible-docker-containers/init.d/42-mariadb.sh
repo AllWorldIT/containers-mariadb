@@ -214,7 +214,7 @@ if [ -n "$MYSQL_CLUSTER_JOIN" ]; then
 	fi
 
 	if [ -z "$NODE_PORT" ]; then
-		MYSQL_CLUSTER_NODE_PORT=3306
+		MYSQL_CLUSTER_NODE_PORT=4567
 	fi
 
 	{
