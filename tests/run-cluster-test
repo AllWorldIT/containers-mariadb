@@ -20,12 +20,12 @@
 # IN THE SOFTWARE.
 
 
-function check_tests() {
+check_tests() {
     i=300
     while [ "$i" -gt 0 ]; do
         i=$((i-1))
 
-        echo "INFO: Waiting for tests to pass... ${i}s"
+        echo "INFO: Waiting for MariaDB tests to pass... ${i}s"
 
         for node in 1 2 3; do
             if docker-compose exec "node$node" test -e /PASSED_MARIADB; then
@@ -52,6 +52,7 @@ function check_tests() {
 }
 
 
+echo "NOTICE: Starting MariaDB test cluster"
 
 # Run in background so we can see the output
 docker-compose up --remove-orphans &
@@ -61,13 +62,13 @@ if check_tests; then
     TESTS_PASSED=yes
 fi
 
-echo "NOTICE: Shutting down MariaDB cluster"
+echo "NOTICE: Shutting down MariaDB test cluster"
 docker-compose down --remove-orphans --volumes
 
 
 if [ -z "$TESTS_PASSED" ]; then
-	echo "ERROR: MariaDB cluster test failed!"
+	echo "ERROR: MariaDB clustering tests failed!"
 	exit 1
 fi
 
-echo "ALL CLUSTER TESTS PASSED!"
+echo "ALL MARIADB CLUSTER TESTS PASSED!"
