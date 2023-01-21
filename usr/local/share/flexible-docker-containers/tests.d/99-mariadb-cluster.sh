@@ -27,5 +27,5 @@ fi
 
 echo "PASSED" > /PASSED_MARIADB
 
-echo "NOTICE: Done with MariaDB testing, waiting for shutdown"
+fdc_notice "Done with MariaDB testing, waiting for shutdown"
 sleep 600

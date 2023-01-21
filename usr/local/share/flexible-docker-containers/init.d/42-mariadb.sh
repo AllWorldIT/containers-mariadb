@@ -35,11 +35,11 @@ function wait_for_startup() {
 		if [ "$got_value" = "$check_value" ]; then
 			break
 		fi
-		echo "INFO: MariaDB database starting... ${i}s"
+		fdc_info "MariaDB database starting... ${i}s"
 		sleep 1
 	done
 	if [ "$i" = 0 ]; then
-		echo "ERROR: MariaDB database start failed!"
+		fdc_error "MariaDB database start failed!"
 		return 1
 	fi
 	return
@@ -51,18 +51,19 @@ function wait_for_shutdown() {
 		if ! kill -s 0 "$1" &> /dev/null; then
 			break
 		fi
-		echo "INFO: Waiting for MariaDB database shutdown to continue with startup... ${i}s"
+		fdc_info "Waiting for MariaDB database shutdown to continue with startup... ${i}s"
 		sleep 1
 	done
 	if [ "$i" = 0 ]; then
-		echo "ERROR: MariaDB database shutdown failed!"
+		fdc_error "MariaDB database shutdown failed!"
 		return 1
 	fi
 	return
 }
 
 
-
+# Setup directory permissions
+fdc_notice "Setting up MariaDB permissions"
 if [ ! -d "/run/mysqld" ]; then
 	mkdir -p /run/mysqld
 fi
@@ -78,16 +79,16 @@ chown -R mysql:mysql /var/lib/mysql
 
 # Tuning
 if [ -n "$MYSQL_BUFFER_SIZE" ]; then
-	echo "NOTICE: Setting MariaDB 'innodb-buffer-pool-size' to $MYSQL_BUFFER_SIZE"
+	fdc_notice "Setting MariaDB 'innodb-buffer-pool-size' to $MYSQL_BUFFER_SIZE"
 	perl -pi -e "s/innodb-buffer-pool-size=.*/innodb-buffer-pool-size=$MYSQL_BUFFER_SIZE/" /etc/my.cnf.d/docker.cnf
 fi
 
 
 if [ -d /var/lib/mysql/mysql ]; then
-	echo "NOTICE: Existing MariaDB database found, continuing..."
+	fdc_notice "Existing MariaDB database found, continuing..."
 
 else
-	echo "NOTICE: Existing MaraiDB database not found, initializing..."
+	fdc_notice "Existing MaraiDB database not found, initializing..."
 
 	mariadb-install-db --user=mysql --ldata=/var/lib/mysql > /dev/null
 
@@ -95,17 +96,17 @@ else
 	mariadbd --version > /var/lib/mysql/version_info
 
 	if [ -z "$MYSQL_ROOT_PASSWORD" ]; then
-		MYSQL_ROOT_PASSWORD=`pwgen 16 1`
-		echo "NOTICE: MariaDB 'root' password set to random '$MYSQL_ROOT_PASSWORD'"
+		MYSQL_ROOT_PASSWORD=$(pwgen 16 1)
+		fdc_notice "MariaDB 'root' password set to random '$MYSQL_ROOT_PASSWORD'"
 	fi
 
 	MYSQL_DATABASE=${MYSQL_DATABASE:-""}
 	MYSQL_USER=${MYSQL_USER:-""}
 	MYSQL_PASSWORD=${MYSQL_PASSWORD:-""}
 
-	tfile=`mktemp`
+	tfile=$(mktemp)
 	if [ ! -f "$tfile" ]; then
-		echo "ERROR: Temporary file '$tfile' does not exist after create"
+		fdc_error "Temporary file '$tfile' does not exist after create"
 		false
 	fi
 
@@ -123,17 +124,17 @@ EOF
 	[ -n "$MYSQL_CLUSTER_JOIN" ] && touch /var/lib/mysql/.create_sst_user
 
 	if [ -n "$MYSQL_DATABASE" ]; then
-		echo "NOTICE: Creating MariaDB database: $MYSQL_DATABASE"
+		fdc_notice "Creating MariaDB database: $MYSQL_DATABASE"
 		if [ -n "$MYSQL_CHARSET" ] && [ -n "$MYSQL_COLLATION" ]; then
-			echo "INFO:   - Character set [$MYSQL_CHARSET] and collation [$MYSQL_COLLATION]"
+			fdc_info "  - Character set [$MYSQL_CHARSET] and collation [$MYSQL_COLLATION]"
 			echo "CREATE DATABASE IF NOT EXISTS \`$MYSQL_DATABASE\` CHARACTER SET $MYSQL_CHARSET COLLATE $MYSQL_COLLATION;" >> "$tfile"
 		else
-			echo "INFO:   - Character set [utf8mb4] and collation [utf8mb4_unicode_520_ci]"
+			fdc_info "  - Character set [utf8mb4] and collation [utf8mb4_unicode_520_ci]"
 			echo "CREATE DATABASE IF NOT EXISTS \`$MYSQL_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci;" >> "$tfile"
 		fi
 
 		if [ -n "$MYSQL_USER" ]; then
-			echo "NOTICE:   - Creating user [$MYSQL_USER] with password"
+			fdc_notice "  - Creating user [$MYSQL_USER] with password"
 			echo "GRANT ALL ON \`$MYSQL_DATABASE\`.* TO '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD';" >> "$tfile"
 			echo "GRANT ALL ON \`$MYSQL_DATABASE\`.* TO '$MYSQL_USER'@'localhost' IDENTIFIED BY '$MYSQL_PASSWORD';" >> "$tfile"
 		fi
@@ -142,31 +143,31 @@ EOF
 	mariadbd --user=mysql --bootstrap --skip-networking=1 < "$tfile"
 	rm -f "$tfile"
 
-	find /var/lib/mysql-initdb.d -type f | sort -n | while read f
+	find /var/lib/mysql-initdb.d -type f | sort -n | while read -r f
 	do
 		case "$f" in
 			*.sql)
-				echo "NOTICE: initdb.d - Loading [$f]..."
+				fdc_notice "mysql-initdb.d - Loading [$f]..."
 				mariadbd --user=mysql --bootstrap --verbose=0 --skip-networking=1 < "$f"
-				echo "NOTICE: initdb.d - Load done [$f]"
+				fdc_notice "mysql-initdb.d - Load done [$f]"
 				;;
 			*.sql.gz)
-				echo "NOTICE: initdb.d - Loading [$f]..."
+				fdc_notice "mysql-initdb.d - Loading [$f]..."
 				gunzip -c "$f" | mariadbd --user=mysql --bootstrap --verbose=0 --skip-networking=1
-				echo "NOTICE: initdb.d - Load done [$f]"
+				fdc_notice "mysql-initdb.d - Load done [$f]"
 				;;
 			*.sql.xz)
-				echo "NOTICE: initdb.d - Loading [$f]..."
+				fdc_notice "mysql-initdb.d - Loading [$f]..."
 				unxz -c "$f" | mariadbd --user=mysql --bootstrap --verbose=0 --skip-networking=1
-				echo "NOTICE: initdb.d - Load done [$f]"
+				fdc_notice "mysql-initdb.d - Load done [$f]"
 				;;
 			*.sql.zst)
-				echo "NOTICE: initdb.d - Loading [$f]..."
+				fdc_notice "mysql-initdb.d - Loading [$f]..."
 				unzstd -c "$f" | mariadbd --user=mysql --bootstrap --verbose=0 --skip-networking=1
-				echo "NOTICE: initdb.d - Load done [$f]"
+				fdc_notice "mysql-initdb.d - Load done [$f]"
 				;;
 			*)
-				echo "WARNING: initdb.d - Ignoring [$f], unsupported file extension"
+				fdc_warn "mysql-initdb.d - Ignoring [$f], unsupported file extension"
 				;;
 		esac
 	done
@@ -191,7 +192,7 @@ fi
 #
 
 if [ -n "$MYSQL_CLUSTER_JOIN" ]; then
-	echo "NOTICE: Setting up MariaDB cluster..."
+	fdc_notice "Setting up MariaDB cluster..."
 
 	# Configure the cluster
 	CLUSTER_CONF_FILE=/etc/my.cnf.d/cluster.cnf
@@ -216,23 +217,23 @@ if [ -n "$MYSQL_CLUSTER_JOIN" ]; then
 		MYSQL_CLUSTER_NODE_PORT=3306
 	fi
 
-	echo "[sst]" > "$CLUSTER_CONF_FILE"
-	echo "tmpdir = /var/tmp/mysqld/sst" >> "$CLUSTER_CONF_FILE"
-
-	echo "[mariadb]" >> "$CLUSTER_CONF_FILE"
-
-	echo "wsrep_on = ON" >> "$CLUSTER_CONF_FILE"
-
-	echo "binlog_format= 'ROW'" >> "$CLUSTER_CONF_FILE"
+	{
+		echo "[sst]"
+		echo "tmpdir = /var/tmp/mysqld/sst"
+		echo "[mariadb]"
+		echo "wsrep_on = ON"
+		echo "binlog_format= 'ROW'"
+	} > "$CLUSTER_CONF_FILE"
 
 	if [ -n "${MYSQL_CLUSTER_NAME}" ]; then
 		echo "wsrep_cluster_name = $MYSQL_CLUSTER_NAME" >> "$CLUSTER_CONF_FILE"
 	fi
 
-	echo "wsrep_node_name = $MYSQL_CLUSTER_NODE_NAME" >> "$CLUSTER_CONF_FILE"
-	echo "wsrep_node_address = $MYSQL_CLUSTER_NODE_IP" >> "$CLUSTER_CONF_FILE"
-
-	echo "wsrep_cluster_address = gcomm://$MYSQL_CLUSTER_JOIN" >> "$CLUSTER_CONF_FILE"
+	{
+		echo "wsrep_node_name = $MYSQL_CLUSTER_NODE_NAME"
+		echo "wsrep_node_address = $MYSQL_CLUSTER_NODE_IP:$MYSQL_CLUSTER_NODE_PORT"
+		echo "wsrep_cluster_address = gcomm://$MYSQL_CLUSTER_JOIN"
+	}  >> "$CLUSTER_CONF_FILE"
 
 	if [ -n "$MYSQL_CLUSTER_DEBUG" ]; then
 		echo "wsrep_debug = ON" >> "$CLUSTER_CONF_FILE"
@@ -263,23 +264,25 @@ EOF
 	#
 
 	if [ -n "$MYSQL_CLUSTER_USE_GTID" ]; then
-		echo "NOTICE: MariaDB enabling GTID support"
+		fdc_notice "MariaDB enabling GTID support"
 
 		if [ -z "$MYSQL_CLUSTER_GTID_LOCAL_ID" ]; then
-			echo "ERROR: For a MariaDB GTID enabled cluster, environment variable 'MYSQL_CLUSTER_GTID_LOCAL_ID' must be provided"
+			fdc_error "For a MariaDB GTID enabled cluster, environment variable 'MYSQL_CLUSTER_GTID_LOCAL_ID' must be provided"
 			false
 		fi
 
 		if [ -z "$MYSQL_CLUSTER_GTID_CLUSTER_ID" ]; then
-			echo "ERROR: For a MariaDB GTID enabled cluster, environment variable 'MYSQL_CLUSTER_GTID_CLUSTER_ID' must be provided"
+			fdc_error "For a MariaDB GTID enabled cluster, environment variable 'MYSQL_CLUSTER_GTID_CLUSTER_ID' must be provided"
 			false
 		fi
 
-		echo "wsrep_gtid_mode = ON" >> "$CLUSTER_CONF_FILE"
-		echo "wsrep_gtid_domain_id = $MYSQL_CLUSTER_GTID_LOCAL_ID" >> "$CLUSTER_CONF_FILE"
-		echo "gtid_domain_id = $MYSQL_CLUSTER_GTID_CLUSTER_ID" >> "$CLUSTER_CONF_FILE"
-		echo "log_bin = ON" >> "$CLUSTER_CONF_FILE"
-		echo "log_slave_updates = ON" >> "$CLUSTER_CONF_FILE"
+		{
+			echo "wsrep_gtid_mode = ON"
+			echo "wsrep_gtid_domain_id = $MYSQL_CLUSTER_GTID_LOCAL_ID"
+			echo "gtid_domain_id = $MYSQL_CLUSTER_GTID_CLUSTER_ID"
+			echo "log_bin = ON"
+			echo "log_slave_updates = ON"
+		} >> "$CLUSTER_CONF_FILE"
 	fi
 
 
@@ -289,11 +292,11 @@ EOF
 
 	# We need to trigger bootstrapping if we've got the env defined
 	if [ -n "$_MYSQL_CLUSTER_BOOTSTRAP" ]; then
-		echo "NOTICE: MariaDB triggering cluster bootstrap"
+		fdc_notice "MariaDB triggering cluster bootstrap"
 		touch /var/lib/mysql/.bootstrap-cluster
 		# Check if we really need to force bootstrapping
 		if [ -n "$_MYSQL_CLUSTER_BOOTSTRAP_FORCE" ]; then
-			echo "NOTICE: MariaDB triggering cluster bootstrap - FORCED"
+			fdc_notice "MariaDB triggering cluster bootstrap - FORCED"
 			touch /var/lib/mysql/.force-bootstrap-cluster
 		fi
 	fi
@@ -309,9 +312,9 @@ EOF
 		chown root:mysql "$CLUSTER_PRIVCONF_FILE"
 	fi
 
-	echo "INFO: MariaDB cluster setup done"
+	fdc_info " MariaDB cluster setup done"
 else
-	echo "INFO: MariaDB not running in cluster"
+	fdc_info " MariaDB not running in cluster"
 fi
 
 
@@ -327,15 +330,15 @@ EOF
 #
 
 # Check if we need to do a database update
-DB_VERSION_OLD=$([ -e /var/lib/mysql/mysql_upgrade_info ] && cat /var/lib/mysql/mysql_upgrade_info || :)
+DB_VERSION_OLD=$( if [ -e /var/lib/mysql/mysql_upgrade_info ]; then cat /var/lib/mysql/mysql_upgrade_info; fi )
 DB_VERSION_NEW=$(mariadbd --version | awk '{ print $3 }')
 
-if [ -n "$DB_VERSION_OLD" -a "${DB_VERSION_OLD%-log}" != "${DB_VERSION_NEW%-log}" ]; then
-	echo "NOTICE: MariaDB database needs upgrading..."
-	echo "NOTICE:   - old version: $DB_VERSION_OLD"
-	echo "NOTICE:   - new version: $DB_VERSION_NEW"
+if [ -n "$DB_VERSION_OLD" ] && [ "${DB_VERSION_OLD%-log}" != "${DB_VERSION_NEW%-log}" ]; then
+	fdc_notice "MariaDB database needs upgrading..."
+	fdc_notice "  - old version: $DB_VERSION_OLD"
+	fdc_notice "  - new version: $DB_VERSION_NEW"
 
-	echo "NOTICE: Upgrading MariaDB database..."
+	fdc_notice "Upgrading MariaDB database..."
 
 	# Start database
 	mariadbd --user=mysql --skip-networking --wsrep-provider=none &
