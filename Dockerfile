@@ -37,7 +37,7 @@ COPY patches build/patches
 
 
 # Install libs we need
-RUN set -ex; \
+RUN set -eux; \
 	true "Installing build dependencies"; \
 # from https://git.alpinelinux.org/aports/tree/main/mariadb/APKBUILD
 	apk add --no-cache \
@@ -55,7 +55,7 @@ RUN set -ex; \
 
 
 # Download MariaDB and Galera tarballs
-RUN set -ex; \
+RUN set -eux; \
 	mkdir -p build; \
 	cd build; \
 	wget "https://downloads.mariadb.org/interstitial/mariadb-${MARIADB_VER}/source/mariadb-${MARIADB_VER}.tar.gz"; \
@@ -65,7 +65,7 @@ RUN set -ex; \
 
 
 # Build and install MariaDB
-RUN set -ex; \
+RUN set -eux; \
 	cd build; \
 	cd mariadb-${MARIADB_VER}; \
 # Patching
@@ -187,7 +187,7 @@ RUN set -ex; \
 
 
 # Build and install Galera
-RUN set -ex; \
+RUN set -eux; \
 	cd build; \
 	cd galera-release_"${GALERA_VER}"; \
 # Patch
@@ -216,7 +216,7 @@ RUN set -ex; \
 	install -m0755 garb/garbd /usr/sbin/
 
 
-RUN set -ex; \
+RUN set -eux; \
 	cd build/mariadb-root; \
 	pkgdir="/build/mariadb-root"; \
 	scanelf --recursive --nobanner --osabi --etype "ET_DYN,ET_EXEC" .  | awk '{print $3}' | xargs \
@@ -247,7 +247,7 @@ LABEL org.opencontainers.image.base.name = "registry.conarx.tech/containers/alpi
 COPY --from=builder /build/mariadb-root /
 
 
-RUN set -ex; \
+RUN set -eux; \
 	true "Install requirements"; \
 # NK: These are critical for some tools to work correctly
 	apk add --no-cache coreutils rsync socat procps pv pwgen; \
@@ -274,7 +274,7 @@ COPY usr/local/share/flexible-docker-containers/healthcheck.d/42-mariadb.sh /usr
 COPY usr/local/share/flexible-docker-containers/tests.d/42-mariadb.sh /usr/local/share/flexible-docker-containers/tests.d
 COPY usr/local/share/flexible-docker-containers/tests.d/43-mariadb-cluster.sh /usr/local/share/flexible-docker-containers/tests.d
 COPY usr/local/share/flexible-docker-containers/tests.d/99-mariadb-cluster.sh /usr/local/share/flexible-docker-containers/tests.d
-RUN set -ex; \
+RUN set -eux; \
 	true "Flexible Docker Containers"; \
 	if [ -n "$VERSION_INFO" ]; then echo "$VERSION_INFO" >> /.VERSION_INFO; fi; \
 	chown root:root \
