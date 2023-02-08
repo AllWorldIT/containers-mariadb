@@ -27,7 +27,7 @@
 FROM registry.conarx.tech/containers/alpine/edge as builder
 
 
-ENV MARIADB_VER=10.10.2
+ENV MARIADB_VER=10.10.3
 ENV GALERA_VER=26.4.12
 ENV WSREP_VER=26
 
