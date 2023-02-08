@@ -312,9 +312,9 @@ EOF
 		chown root:mysql "$CLUSTER_PRIVCONF_FILE"
 	fi
 
-	fdc_info " MariaDB cluster setup done"
+	fdc_info "MariaDB cluster setup done"
 else
-	fdc_info " MariaDB not running in cluster"
+	fdc_info "MariaDB not running in cluster"
 fi
 
 
