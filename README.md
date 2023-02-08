@@ -57,7 +57,7 @@ We also provide consulting services to create and maintain Docker images to meet
 # General Environment Variables
 
 Additional environment variables are available from...
-* [Conarx Containers Alpine image](https://gitlab.conarx.tech/containers/alpine).
+* [Conarx Containers Alpine image](https://gitlab.conarx.tech/containers/alpine)
 
 Environment variables were prefixed with `MYSQL_` to try retain as much compatibility to the official MariaDB and MySQL images as
 possible.
