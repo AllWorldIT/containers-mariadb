@@ -27,8 +27,8 @@
 FROM registry.conarx.tech/containers/alpine/3.17 as builder
 
 
-ENV MARIADB_VER=10.10.3
-ENV GALERA_VER=26.4.12
+ENV MARIADB_VER=10.11.2
+ENV GALERA_VER=26.4.13
 ENV WSREP_VER=26
 
 
@@ -193,11 +193,8 @@ RUN set -eux; \
 # Patch
 	patch -p1 < ../patches/galera-musl-page-size.patch; \
 	patch -p1 < ../patches/galera-musl-sched_param.patch; \
-# NK: Below patch is for 26.4.13
-#	patch -p1 < ../patches/galera-musl-sys-poll-h.patch; \
+	patch -p1 < ../patches/galera-musl-sys-poll-h.patch; \
 	patch -p1 < ../patches/galera-musl-wordsize.patch; \
-# Remove for 26.4.13
-	patch -p1 < ../patches/galera-memory-leak-fix.patch; \
 # Use MaraiDB's wsrep
 	rmdir wsrep/src; \
 	ln -s "../../mariadb-${MARIADB_VER}/wsrep-lib/wsrep-API/v${WSREP_VER}" wsrep/src; \
