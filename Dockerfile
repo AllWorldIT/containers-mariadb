@@ -213,9 +213,9 @@ RUN set -eux; \
 	install -m0755 garb/garbd /usr/sbin/
 
 
+# Strip binaries
 RUN set -eux; \
 	cd build/mariadb-root; \
-	pkgdir="/build/mariadb-root"; \
 	scanelf --recursive --nobanner --osabi --etype "ET_DYN,ET_EXEC" .  | awk '{print $3}' | xargs \
 		strip \
 			--remove-section=.comment \
@@ -235,9 +235,11 @@ FROM registry.conarx.tech/containers/alpine/edge
 
 
 ARG VERSION_INFO=
-LABEL org.opencontainers.image.authors   = "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   = "edge"
-LABEL org.opencontainers.image.base.name = "registry.conarx.tech/containers/alpine/edge"
+
+LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
+LABEL org.opencontainers.image.version   "edge"
+LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/edge"
+
 
 
 # Copy in built binaries
