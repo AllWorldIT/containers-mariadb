@@ -31,22 +31,13 @@ test-cluster:
   needs:
     - build
     - test
+  parallel:
+    matrix:
+      - WITH_GTID: [ "GTID:off", "GTID:on" ]
   script:
+    - if [ "$WITH_GTID" = "GTID:on" ]; then WITH_GTID=-gtid; else WITH_GTID=""; fi
     - docker pull "${PIPELINE_IMAGE}"
     - cp -a tests "tests-${CI_COMMIT_SHORT_SHA}-${CI_CONCURRENT_ID}"
     - cd "tests-${CI_COMMIT_SHORT_SHA}-${CI_CONCURRENT_ID}"
-    - sed -e "s,@@PIPELINE_IMAGE@@,${PIPELINE_IMAGE}," -e "s,@@WITH_GTID@@,," < docker-compose.yml.tmpl > docker-compose.yml
-    - ./run-cluster-test
-
-
-test-cluster-gtid:
-  stage: test
-  needs:
-    - build
-    - test-cluster
-  script:
-    - docker pull "${PIPELINE_IMAGE}"
-    - cp -a tests "tests-${CI_COMMIT_SHORT_SHA}-${CI_CONCURRENT_ID}"
-    - cd "tests-${CI_COMMIT_SHORT_SHA}-${CI_CONCURRENT_ID}"
-    - sed -e "s,@@PIPELINE_IMAGE@@,${PIPELINE_IMAGE}," -e "s,@@WITH_GTID@@,-gtid," < docker-compose.yml.tmpl > docker-compose.yml
+    - sed -e "s,@@PIPELINE_IMAGE@@,${PIPELINE_IMAGE}," -e "s,@@WITH_GTID@@,${WITH_GTID}," < docker-compose.yml.tmpl > docker-compose.yml
     - ./run-cluster-test
