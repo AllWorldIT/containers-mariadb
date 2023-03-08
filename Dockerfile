@@ -199,9 +199,9 @@ RUN set -eux; \
 	rmdir wsrep/src; \
 	ln -s "../../mariadb-${MARIADB_VER}/wsrep-lib/wsrep-API/v${WSREP_VER}" wsrep/src; \
 # Compiler flags
-	export CFLAGS="-march=x86-64 -mtune=generic -Os -pipe -fno-plt -fexceptions -Wp,-D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -fstack-clash-protection -fcf-protection -flto=auto"; \
+	export CFLAGS="-march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions -Wp,-D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -fstack-clash-protection -fcf-protection -flto=auto"; \
 	export CXXFLAGS="$CFLAGS -Wp,-D_GLIBCXX_ASSERTIONS"; \
-	export LDFLAGS="-Wl,-Os,--sort-common,--as-needed,-z,relro,-z,now -flto=auto"; \
+	export LDFLAGS="-Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now -flto=auto"; \
 	\
 # Build
 	cmake .; \
@@ -213,9 +213,9 @@ RUN set -eux; \
 	install -m0755 garb/garbd /usr/sbin/
 
 
+# Strip binaries
 RUN set -eux; \
 	cd build/mariadb-root; \
-	pkgdir="/build/mariadb-root"; \
 	scanelf --recursive --nobanner --osabi --etype "ET_DYN,ET_EXEC" .  | awk '{print $3}' | xargs \
 		strip \
 			--remove-section=.comment \
@@ -235,9 +235,11 @@ FROM registry.conarx.tech/containers/alpine/edge
 
 
 ARG VERSION_INFO=
-LABEL org.opencontainers.image.authors   = "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   = "edge"
-LABEL org.opencontainers.image.base.name = "registry.conarx.tech/containers/alpine/edge"
+
+LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
+LABEL org.opencontainers.image.version   "edge"
+LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/edge"
+
 
 
 # Copy in built binaries
