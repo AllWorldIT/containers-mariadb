@@ -70,10 +70,6 @@ RUN set -eux; \
 	cd mariadb-${MARIADB_VER}; \
 # Patching
 	patch -p1 < ../patches/better-tmpdirs.patch; \
-# Compiler flags
-	export CFLAGS="-march=x86-64 -mtune=generic -Os -pipe -fno-plt -fexceptions -Wp,-D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -fstack-clash-protection -fcf-protection -flto=auto"; \
-	export CXXFLAGS="-Wp,-D_GLIBCXX_ASSERTIONS"; \
-	export LDFLAGS="-Wl,-Os,--sort-common,--as-needed,-z,relro,-z,now -flto=auto"; \
 	\
 	source "VERSION"; \
 	source ../galera-release_"${GALERA_VER}"/GALERA_VERSION; \
@@ -85,7 +81,7 @@ RUN set -eux; \
 	pkgname=mariadb; \
 	cmake . \
 		-DBUILD_CONFIG=mysql_release \
-		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
 		-DCMAKE_INSTALL_PREFIX=/usr \
 		-DSYSCONFDIR=/etc \
 		-DSYSCONF2DIR=/etc/my.cnf.d \
@@ -198,11 +194,6 @@ RUN set -eux; \
 # Use MaraiDB's wsrep
 	rmdir wsrep/src; \
 	ln -s "../../mariadb-${MARIADB_VER}/wsrep-lib/wsrep-API/v${WSREP_VER}" wsrep/src; \
-# Compiler flags
-	export CFLAGS="-march=x86-64 -mtune=generic -O2 -pipe -fno-plt -fexceptions -Wp,-D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -fstack-clash-protection -fcf-protection -flto=auto"; \
-	export CXXFLAGS="$CFLAGS -Wp,-D_GLIBCXX_ASSERTIONS"; \
-	export LDFLAGS="-Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now -flto=auto"; \
-	\
 # Build
 	cmake .; \
 	make VERBOSE=1 -j$(nprocs) -l 8; \
