@@ -28,9 +28,6 @@ include:
 
 test-cluster:
   stage: test
-  needs:
-    - build
-    - test
   parallel:
     matrix:
       - WITH_GTID: [ "GTID:off", "GTID:on" ]
