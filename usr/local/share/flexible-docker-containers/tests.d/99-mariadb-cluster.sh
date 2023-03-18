@@ -25,7 +25,7 @@ if [ "$FDC_CI" != "cluster-node1" ] && [ "$FDC_CI" != "cluster-node2" ] && [ "$F
 	return
 fi
 
-echo "PASSED" > /PASSED_MARIADB
 
 fdc_notice "Done with MariaDB testing, waiting for shutdown"
+echo "PASSED" > /PASSED_MARIADB
 sleep 600
