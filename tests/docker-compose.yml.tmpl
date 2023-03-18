@@ -26,25 +26,26 @@ services:
     environment:
       - FDC_CI=cluster-node1@@WITH_GTID@@
     networks:
-      - internal
+      - external
 
   node2:
     image: @@PIPELINE_IMAGE@@
     environment:
       - FDC_CI=cluster-node2@@WITH_GTID@@
     networks:
-      - internal
+      - external
 
   node3:
     image: @@PIPELINE_IMAGE@@
     environment:
       - FDC_CI=cluster-node3@@WITH_GTID@@
     networks:
-      - internal
+      - external
 
 
 networks:
-  internal:
+  external:
     driver: bridge
-
+    enable_ipv6: true
+    
 # vim: filetype=yaml tabstop=2 shiftwidth=2 expandtab
