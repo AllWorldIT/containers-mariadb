@@ -27,7 +27,7 @@
 FROM registry.conarx.tech/containers/alpine/3.17 as builder
 
 
-ENV MARIADB_VER=10.11.2
+ENV MARIADB_VER=10.11.3
 ENV GALERA_VER=26.4.13
 ENV WSREP_VER=26
 
@@ -69,7 +69,7 @@ RUN set -eux; \
 	cd build; \
 	cd mariadb-${MARIADB_VER}; \
 # Patching
-	patch -p1 < ../patches/better-tmpdirs.patch; \
+	patch -p1 < ../patches/mariadb-10.11.3_better-temp-dirs.patch; \
 	\
 	source "VERSION"; \
 	source ../galera-release_"${GALERA_VER}"/GALERA_VERSION; \
@@ -77,6 +77,8 @@ RUN set -eux; \
 	WSREP_VERSION="$(grep WSREP_INTERFACE_VERSION wsrep-lib/wsrep-API/v26/wsrep_api.h | cut -d '"' -f2).$(grep 'SET(WSREP_PATCH_VERSION'  "cmake/wsrep-.cmake" | cut -d '"' -f2)"; \
 	GALERA_VERSION="$GALERA_VERSION_WSREP_API.$GALERA_VERSION_MAJOR.$GALERA_VERSION_MINOR$GALERA_VERSION_EXTRA"; \
 	COMMENT="MariaDB Cluster $MYSQL_VERSION, WSREP version $WSREP_VERSION, Galera version $GALERA_VERSION"; \
+	# Compiler flags
+	. /etc/buildflags; \
 	\
 	pkgname=mariadb; \
 	cmake . \
