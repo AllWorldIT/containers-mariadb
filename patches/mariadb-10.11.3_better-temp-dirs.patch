@@ -1,8 +1,7 @@
-diff --git a/scripts/wsrep_sst_mariabackup.sh b/scripts/wsrep_sst_mariabackup.sh
-index f440660d899..6ea47620bd9 100644
---- a/scripts/wsrep_sst_mariabackup.sh
-+++ b/scripts/wsrep_sst_mariabackup.sh
-@@ -1045,16 +1045,18 @@ if [ "$WSREP_SST_OPT_ROLE" = 'donor' ]; then
+diff --color -ru mariadb-10.11.3_vanilla/scripts/wsrep_sst_mariabackup.sh mariadb-10.11.3_better-temp-dirs/scripts/wsrep_sst_mariabackup.sh
+--- mariadb-10.11.3_vanilla/scripts/wsrep_sst_mariabackup.sh	2023-05-05 13:40:23.000000000 +0000
++++ mariadb-10.11.3_better-temp-dirs/scripts/wsrep_sst_mariabackup.sh	2023-05-11 09:56:50.673511308 +0000
+@@ -1050,16 +1050,18 @@
          tmpdir=$(parse_cnf "$encgroups" 'tmpdir')
          if [ -z "$tmpdir" ]; then
              xtmpdir="$(mktemp -d)"
@@ -15,10 +14,10 @@ index f440660d899..6ea47620bd9 100644
 +            itmpdir=$(TMPDIR="$tmpdir"; mktemp '-d')
          fi
  
-         wsrep_log_info "Using '$xtmpdir' as mariabackup temporary directory"
+         wsrep_log_info "Using '$xtmpdir' as mariadb-backup temporary directory"
          tmpopts=" --tmpdir='$xtmpdir'"
  
 -        itmpdir="$(mktemp -d)"
-         wsrep_log_info "Using '$itmpdir' as mariabackup working directory"
+         wsrep_log_info "Using '$itmpdir' as mariadb-abackup working directory"
  
          usrst=0
