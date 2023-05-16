@@ -70,6 +70,7 @@ RUN set -eux; \
 	cd mariadb-${MARIADB_VER}; \
 # Patching
 	patch -p1 < ../patches/mariadb-10.11.3_better-temp-dirs.patch; \
+	patch -p1 < ../patches/mariadb-10.11.3_gcc13-fix.patch; \
 	\
 	source "VERSION"; \
 	source ../galera-release_"${GALERA_VER}"/GALERA_VERSION; \
