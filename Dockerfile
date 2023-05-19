@@ -24,9 +24,10 @@
 #
 
 
-FROM registry.conarx.tech/containers/alpine/3.17 as builder
+FROM registry.conarx.tech/containers/alpine/3.18 as builder
 
 
+# NB: Must be updated below too in image version
 ENV MARIADB_VER=10.11.3
 ENV GALERA_VER=26.4.13
 ENV WSREP_VER=26
@@ -70,6 +71,7 @@ RUN set -eux; \
 	cd mariadb-${MARIADB_VER}; \
 # Patching
 	patch -p1 < ../patches/mariadb-10.11.3_better-temp-dirs.patch; \
+	patch -p1 < ../patches/mariadb-10.11.3_gcc13-fix.patch; \
 	\
 	source "VERSION"; \
 	source ../galera-release_"${GALERA_VER}"/GALERA_VERSION; \
@@ -224,13 +226,14 @@ RUN set -eux; \
 #
 
 
-FROM registry.conarx.tech/containers/alpine/3.17
+FROM registry.conarx.tech/containers/alpine/3.18
 
 
 ARG VERSION_INFO=
+
 LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   "3.17+10.10"
-LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.17"
+LABEL org.opencontainers.image.version   "3.18+10.11"
+LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.18"
 
 
 # Copy in built binaries
