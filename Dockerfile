@@ -27,7 +27,8 @@
 FROM registry.conarx.tech/containers/alpine/3.17 as builder
 
 
-ENV MARIADB_VER=10.11.3
+# NB: Must be updated below too in image version
+ENV MARIADB_VER=10.11.4
 ENV GALERA_VER=26.4.13
 ENV WSREP_VER=26
 
@@ -229,7 +230,7 @@ FROM registry.conarx.tech/containers/alpine/3.17
 
 ARG VERSION_INFO=
 LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   "3.17+10.10"
+LABEL org.opencontainers.image.version   "3.17+10.11"
 LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.17"
 
 
