@@ -28,7 +28,7 @@ FROM registry.conarx.tech/containers/alpine/3.18 as builder
 
 
 # NB: Must be updated below too in image version
-ENV MARIADB_VER=10.11.3
+ENV MARIADB_VER=10.11.4
 ENV GALERA_VER=26.4.13
 ENV WSREP_VER=26
 
