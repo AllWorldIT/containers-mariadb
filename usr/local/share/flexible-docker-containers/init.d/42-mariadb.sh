@@ -80,7 +80,7 @@ chown -R mysql:mysql /var/lib/mysql
 # Tuning
 if [ -n "$MYSQL_BUFFER_SIZE" ]; then
 	fdc_notice "Setting MariaDB 'innodb-buffer-pool-size' to $MYSQL_BUFFER_SIZE"
-	perl -pi -e "s/innodb-buffer-pool-size=.*/innodb-buffer-pool-size=$MYSQL_BUFFER_SIZE/" /etc/my.cnf.d/docker.cnf
+	sed -i -e "s/innodb-buffer-pool-size=.*/innodb-buffer-pool-size=$MYSQL_BUFFER_SIZE/" /etc/my.cnf.d/docker.cnf
 fi
 
 
