@@ -70,6 +70,7 @@ RUN set -eux; \
 	cd build; \
 	cd mariadb-${MARIADB_VER}; \
 # Patching
+	patch -p1 < ../patches/mariadb-lfs64.patch; \
 	patch -p1 < ../patches/mariadb-10.11.3_better-temp-dirs.patch; \
 	patch -p1 < ../patches/mariadb-10.11.3_gcc13-fix.patch; \
 	\
