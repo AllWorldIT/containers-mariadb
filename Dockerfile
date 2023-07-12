@@ -70,6 +70,7 @@ RUN set -eux; \
 	cd build; \
 	cd mariadb-${MARIADB_VER}; \
 # Patching
+	patch -p1 < ../patches/mariadb-lfs64.patch; \
 	patch -p1 < ../patches/mariadb-10.11.3_better-temp-dirs.patch; \
 	patch -p1 < ../patches/mariadb-10.11.3_gcc13-fix.patch; \
 	\
@@ -84,13 +85,13 @@ RUN set -eux; \
 	\
 	pkgname=mariadb; \
 	cmake . \
-		-DBUILD_CONFIG=mysql_release \
 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
 		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCOMPILATION_COMMENT="Conarx Containers" \
 		-DSYSCONFDIR=/etc \
 		-DSYSCONF2DIR=/etc/my.cnf.d \
 		-DMYSQL_DATADIR=/var/lib/mysql \
-		-DMYSQL_UNIX_ADDR=/run/mysqld/mysqld.sock \
+		-DINSTALL_UNIX_ADDRDIR=/run/mysqld/mysqld.sock \
 		-DDEFAULT_CHARSET=utf8mb4 \
 		-DDEFAULT_COLLATION=utf8mb4_general_ci \
 		-DENABLED_LOCAL_INFILE=ON \
@@ -116,10 +117,9 @@ RUN set -eux; \
 		-DPLUGIN_MYISAM=YES \
 		-DPLUGIN_MROONGA=YES \
 		-DPLUGIN_OQGRAPH=NO \
-		-DPLUGIN_PARTITION=YES \
+		-DPLUGIN_PARTITION=NO \
 		-DPLUGIN_ROCKSDB=YES \
 		-DPLUGIN_SPHINX=NO \
-		-DPLUGIN_SPIDER=YES \
 		-DPLUGIN_TOKUDB=NO \
 		-DPLUGIN_AUTH_GSSAPI=NO \
 		-DPLUGIN_AUTH_GSSAPI_CLIENT=OFF \
