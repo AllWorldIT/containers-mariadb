@@ -158,7 +158,7 @@ below.
 
 **Mandatory Option**
 
-This must be specified, the default password used is `msyql.sst` which is not secure.
+This must be specified, the default password used is `mariadb.sst` which is not secure.
 
 
 ### MYSQL_CLUSTER_DEBUG
