@@ -24,7 +24,7 @@
 #
 
 
-FROM registry.conarx.tech/containers/alpine/3.18 as builder
+FROM registry.conarx.tech/containers/alpine/3.19 as builder
 
 
 # NB: Must be updated below too in image version
@@ -226,14 +226,14 @@ RUN set -eux; \
 #
 
 
-FROM registry.conarx.tech/containers/alpine/3.18
+FROM registry.conarx.tech/containers/alpine/3.19
 
 
 ARG VERSION_INFO=
 
 LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   "3.18+10.11"
-LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.18"
+LABEL org.opencontainers.image.version   "3.19+10.11"
+LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.19"
 
 
 # Copy in built binaries
