@@ -31,6 +31,10 @@ FROM registry.conarx.tech/containers/alpine/3.19 as builder
 ENV MARIADB_VER=10.11.7
 ENV GALERA_VER=26.4.13
 ENV WSREP_VER=26
+# https://github.com/codership/wsrep-API/commits/v26/
+ENV WSREP_COMMIT=427c73c5c8c443765ec16bfc70d94a65a7fca64c
+# https://github.com/MariaDB/galera/tree/mariadb-4.x-26.4.18
+ENV GALERA_COMMIT=ac815a03f3614fdb32adab0c49bad983400110d6
 
 
 # Copy build patches
@@ -52,7 +56,7 @@ RUN set -eux; \
 		perl perl-dbi perl-dbd-mysql perl-getopt-long perl-socket perl-term-readkey \
 		\
 		boost-dev \
-		bzip2-dev zstd-dev lz4-dev lzo-dev snappy-dev jemalloc-dev asio-dev check-dev
+		bzip2-dev zstd-dev lz4-dev lzo-dev snappy-dev jemalloc-dev asio-dev check-dev fmt-dev
 
 
 # Download MariaDB and Galera tarballs
@@ -60,9 +64,11 @@ RUN set -eux; \
 	mkdir -p build; \
 	cd build; \
 	wget "https://downloads.mariadb.org/interstitial/mariadb-${MARIADB_VER}/source/mariadb-${MARIADB_VER}.tar.gz"; \
-	wget "https://github.com/codership/galera/archive/release_${GALERA_VER}.tar.gz" -O "galera-${GALERA_VER}.tar.gz"; \
+	wget "https://github.com/MariaDB/galera/archive/${GALERA_COMMIT}.tar.gz" -O "galera-${GALERA_COMMIT}.tar.gz"; \
+	wget "https://github.com/codership/wsrep-API/archive/${WSREP_COMMIT}.tar.gz" -O "wsrep-api-${WSREP_COMMIT}.tar.gz"; \
 	tar -xf "mariadb-${MARIADB_VER}.tar.gz"; \
-	tar -xf "galera-${GALERA_VER}.tar.gz"
+	tar -xf "galera-${GALERA_COMMIT}.tar.gz"; \
+	tar -xf "wsrep-api-${WSREP_COMMIT}.tar.gz"
 
 
 # Build and install MariaDB
@@ -73,9 +79,11 @@ RUN set -eux; \
 	patch -p1 < ../patches/mariadb-lfs64.patch; \
 	patch -p1 < ../patches/mariadb-10.11.3_better-temp-dirs.patch; \
 	patch -p1 < ../patches/mariadb-10.11.3_gcc13-fix.patch; \
+	patch -p1 < ../patches/mariadb-have_stacktrace.patch; \
 	\
 	source "VERSION"; \
-	source ../galera-release_"${GALERA_VER}"/GALERA_VERSION; \
+	#source ../galera-release_"${GALERA_VER}"/GALERA_VERSION; \
+	source ../galera-${GALERA_COMMIT}/GALERA_VERSION; \
 	MYSQL_VERSION="$MYSQL_VERSION_MAJOR.$MYSQL_VERSION_MINOR.$MYSQL_VERSION_PATCH"; \
 	WSREP_VERSION="$(grep WSREP_INTERFACE_VERSION wsrep-lib/wsrep-API/v26/wsrep_api.h | cut -d '"' -f2).$(grep 'SET(WSREP_PATCH_VERSION'  "cmake/wsrep-.cmake" | cut -d '"' -f2)"; \
 	GALERA_VERSION="$GALERA_VERSION_WSREP_API.$GALERA_VERSION_MAJOR.$GALERA_VERSION_MINOR$GALERA_VERSION_EXTRA"; \
@@ -84,7 +92,7 @@ RUN set -eux; \
 	. /etc/buildflags; \
 	\
 	pkgname=mariadb; \
-	cmake . \
+	cmake -B build -G Ninja -Wno-dev \
 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
 		-DCMAKE_INSTALL_PREFIX=/usr \
 		-DCOMPILATION_COMMENT="Conarx Containers" \
@@ -97,6 +105,7 @@ RUN set -eux; \
 		-DENABLED_LOCAL_INFILE=ON \
 		-DINSTALL_INFODIR=share/info \
 		-DINSTALL_MANDIR=share/man \
+		-DINSTALL_PAMDIR=/lib/security \
 		-DINSTALL_PLUGINDIR=lib/$pkgname/plugin \
 		-DINSTALL_SCRIPTDIR=bin \
 		-DINSTALL_INCLUDEDIR=include/mysql \
@@ -115,7 +124,7 @@ RUN set -eux; \
 		-DPLUGIN_CASSANDRA=NO \
 		-DPLUGIN_CSV=YES \
 		-DPLUGIN_MYISAM=YES \
-		-DPLUGIN_MROONGA=YES \
+		-DPLUGIN_MROONGA=NO \
 		-DPLUGIN_OQGRAPH=NO \
 		-DPLUGIN_PARTITION=NO \
 		-DPLUGIN_ROCKSDB=YES \
@@ -125,7 +134,7 @@ RUN set -eux; \
 		-DPLUGIN_AUTH_GSSAPI_CLIENT=OFF \
 		-DPLUGIN_CRACKLIB_PASSWORD_CHECK=NO \
 		-DWITH_ASAN=OFF \
-#		-DWITH_EMBEDDED_SERVER=ON \
+		-DWITH_EMBEDDED_SERVER=ON \
 		-DWITH_EXTRA_CHARSETS=complex \
 		-DWITH_INNODB_BZIP2=ON \
 		-DWITH_INNODB_LZ4=ON \
@@ -139,6 +148,7 @@ RUN set -eux; \
 		-DWITH_ROCKSDB_SNAPPY=ON \
 		-DWITH_JEMALLOC=ON \
 		-DWITH_LIBARCHIVE=system \
+		-DWITH_LIBFMT=system \
 		-DWITH_LIBNUMA=NO \
 		-DWITH_LIBWRAP=OFF \
 		-DWITH_LIBWSEP=OFF \
@@ -151,18 +161,16 @@ RUN set -eux; \
 		-DWITH_ZLIB=system \
 		-DSKIP_TESTS=ON \
 		-DCOMPILATION_COMMENT="$COMMENT" \
-		-DDEFAULT_CHARSET=utf8mb4 \
-		-DDEFAULT_COLLATION=utf8mb4_unicode_520_ci \
 		; \
 	\
 # Output build config
 	cmake -L; \
 	\
 # Build
-	make VERBOSE=1 -j$(nproc) -l 8; \
+	cmake --build build; \
 # Install
 	pkgdir="/build/mariadb-root"; \
-	DESTDIR="$pkgdir" cmake --install .; \
+	DESTDIR="$pkgdir" cmake --install build; \
 	\
 	mkdir -p "$pkgdir"/etc/my.cnf.d; \
 # Remove cruft
@@ -189,7 +197,8 @@ RUN set -eux; \
 # Build and install Galera
 RUN set -eux; \
 	cd build; \
-	cd galera-release_"${GALERA_VER}"; \
+	#cd galera-release_"${GALERA_VER}"; \
+	cd galera-${GALERA_COMMIT}; \
 # Patch
 	patch -p1 < ../patches/galera-musl-page-size.patch; \
 	patch -p1 < ../patches/galera-musl-sched_param.patch; \
@@ -197,15 +206,18 @@ RUN set -eux; \
 	patch -p1 < ../patches/galera-musl-wordsize.patch; \
 # Use MaraiDB's wsrep
 	rmdir wsrep/src; \
-	ln -s "../../mariadb-${MARIADB_VER}/wsrep-lib/wsrep-API/v${WSREP_VER}" wsrep/src; \
+	ln -s "../../wsrep-API-${WSREP_COMMIT}" wsrep/src; \
+	# Compiler flags
+	. /etc/buildflags; \
 # Build
-	cmake .; \
-	make VERBOSE=1 -j$(nprocs) -l 8; \
+	cmake -B build -G Ninja -Wno-dev \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo; \
+	cmake --build build; \
 # Install
 	pkgdir="/build/mariadb-root"; \
 	mkdir -p "$pkgdir"/usr/lib/galera; \
-	install -m0755 libgalera_smm.so "$pkgdir"/usr/lib/galera/; \
-	install -m0755 garb/garbd /usr/sbin/
+	install -m0755 build/libgalera_smm.so "$pkgdir"/usr/lib/galera/; \
+	install -m0755 build/garb/garbd /usr/sbin/
 
 
 # Strip binaries
@@ -246,7 +258,7 @@ RUN set -eux; \
 	apk add --no-cache coreutils rsync socat procps pv pwgen; \
 	apk add --no-cache \
 		libaio libssl3 libcrypto3 pcre2 snappy zstd-libs libxml2 nghttp2-libs ncurses-libs lzo xz-libs lz4-libs libcurl \
-		libbz2 brotli-libs; \
+		libbz2 brotli-libs fmt; \
 	true "Setup user and group"; \
 	addgroup -S mysql 2>/dev/null; \
 	adduser -S -D -h /var/lib/mysql -s /sbin/nologin -G mysql -g mysql mysql 2>/dev/null; \
