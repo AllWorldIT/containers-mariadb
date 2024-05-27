@@ -24,7 +24,7 @@
 #
 
 
-FROM registry.conarx.tech/containers/alpine/3.19 as builder
+FROM registry.conarx.tech/containers/alpine/3.20 as builder
 
 
 # NB: Must be updated below too in image version
@@ -56,7 +56,7 @@ RUN set -eux; \
 		perl perl-dbi perl-dbd-mysql perl-getopt-long perl-socket perl-term-readkey \
 		\
 		boost-dev \
-		bzip2-dev zstd-dev lz4-dev lzo-dev snappy-dev jemalloc-dev asio-dev check-dev
+		bzip2-dev zstd-dev lz4-dev lzo-dev snappy-dev jemalloc-dev asio-dev check-dev fmt-dev
 
 
 # Download MariaDB and Galera tarballs
@@ -148,6 +148,7 @@ RUN set -eux; \
 		-DWITH_ROCKSDB_SNAPPY=ON \
 		-DWITH_JEMALLOC=ON \
 		-DWITH_LIBARCHIVE=system \
+		-DWITH_LIBFMT=system \
 		-DWITH_LIBNUMA=NO \
 		-DWITH_LIBWRAP=OFF \
 		-DWITH_LIBWSEP=OFF \
@@ -237,14 +238,14 @@ RUN set -eux; \
 #
 
 
-FROM registry.conarx.tech/containers/alpine/3.19
+FROM registry.conarx.tech/containers/alpine/3.20
 
 
 ARG VERSION_INFO=
 
 LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   "3.19+10.11"
-LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.19"
+LABEL org.opencontainers.image.version   "3.20+10.11"
+LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.20"
 
 
 # Copy in built binaries
@@ -257,7 +258,7 @@ RUN set -eux; \
 	apk add --no-cache coreutils rsync socat procps pv pwgen; \
 	apk add --no-cache \
 		libaio libssl3 libcrypto3 pcre2 snappy zstd-libs libxml2 nghttp2-libs ncurses-libs lzo xz-libs lz4-libs libcurl \
-		libbz2 brotli-libs; \
+		libbz2 brotli-libs fmt; \
 	true "Setup user and group"; \
 	addgroup -S mysql 2>/dev/null; \
 	adduser -S -D -h /var/lib/mysql -s /sbin/nologin -G mysql -g mysql mysql 2>/dev/null; \
