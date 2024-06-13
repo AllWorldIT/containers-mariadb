@@ -20,26 +20,37 @@
 
 
 [mariadbd]
+
+; Make sure we don't store files in /tmp
+tmpdir = /var/tmp/mariadb
+
+; Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links = 0
+
 ; File per table
 innodb-file-per-table
 
-innodb-buffer-pool-size=64M
-innodb_flush_method=O_DIRECT
+innodb-buffer-pool-size = 128M
 
-net-write-timeout=6000
-net-read-timeout=6000
+net-write-timeout = 6000
+net-read-timeout = 6000
 
-max-allowed-packet=128M
-
-; Strict mode so we don't silently ignore some kinds of errors
-sql-mode=STRICT_ALL_TABLES
+; Strict mode so we don't silently ignore errors
+sql-mode = STRICT_ALL_TABLES
 
 ; Listen on port 3306
-bind-address = *
+bind-address = ::
 
 ; Clustering variables, set to reasonable defaults
 wsrep_provider = /usr/lib/galera/libgalera_smm.so
 wsrep_sst_method = mariabackup
 
-[mariadb-dump]
-max-allowed-packet=1G
+
+[sst]
+
+sst-log-archive-dir = /var/tmp/mariadb/sst_log_archive
+
+
+[mariadb]
+
+max-allowed-packet = 1G
