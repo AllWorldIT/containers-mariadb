@@ -1,0 +1,13 @@
+diff --git a/sql/semisync_master_ack_receiver.h b/sql/semisync_master_ack_receiver.h
+index 6b3ff3695d0..20ff7822c8a 100644
+--- a/sql/semisync_master_ack_receiver.h
++++ b/sql/semisync_master_ack_receiver.h
+@@ -204,7 +204,7 @@ static inline void signal_listener()
+ }
+
+ #ifdef HAVE_POLL
+-#include <sys/poll.h>
++#include <poll.h>
+
+ class Poll_socket_listener final : public Ack_listener
+ {
