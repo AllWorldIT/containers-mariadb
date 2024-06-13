@@ -37,7 +37,7 @@ function wait_for_startup() {
 		sleep 1
 	done
 	if [ "$i" = 0 ]; then
-		fdc_test_failed mariadb "Database did not return correct value ('$database', '$table', '$column')\nResult: $got_value"
+		fdc_test_fail mariadb "Database did not return correct value ('$database', '$table', '$column')\nResult: $got_value"
 		return 1
 	fi
 	return
