@@ -169,7 +169,6 @@ RUN set -eux; \
 		-DWITH_SSL=system \
 		-DWITH_VALGRIND=OFF \
 		-DWITH_ZLIB=system \
-#		-DSKIP_TESTS=ON \
 		; \
 	\
 	# Build
@@ -198,7 +197,7 @@ RUN set -eux; \
 		"$rootdir"/lib/libmysqlclient_r.so \
 		"$rootdir"/lib/libmariadb.so* \
 		"$rootdir"/lib/pkgconfig/libmariadb.pc \
-		"$rootdir"/mariadb-test \
+		"$rootdir"/mysql-test \
 		"$rootdir"/sql-bench \
 		"$rootdir"/lib/pkgconfig
 
