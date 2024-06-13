@@ -20,7 +20,7 @@
 # IN THE SOFTWARE.
 
 
-export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH=/usr/local/sbin:/usr/local/bin:/opt/mariadb/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Next thing we do is check if we're bootstraping this node
 ARGS=()
@@ -35,4 +35,4 @@ if [ -e /var/lib/mysql/.force-bootstrap-cluster ]; then
 	rm -f /var/lib/mysql/.force-bootstrap-cluster
 fi
 
-exec /usr/bin/mariadbd "$@" "${ARGS[@]}"
+exec /opt/mariadb/bin/mariadbd "$@" "${ARGS[@]}"
