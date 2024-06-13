@@ -62,18 +62,18 @@ function wait_for_shutdown() {
 }
 
 
-# Setup directory permissions
-fdc_notice "Setting up MariaDB permissions"
+# Setup directories
+fdc_notice "Setting up MariaDB directories"
 if [ ! -d "/run/mysqld" ]; then
 	mkdir -p /run/mysqld
 fi
 chown -R mysql:mysql /run/mysqld
 
-if [ ! -d "/var/tmp/mysqld" ]; then
-	mkdir -p /var/tmp/mysqld/sst
+if [ ! -d "/var/tmp/mariadb" ]; then
+	mkdir -p /var/tmp/mariadb
 fi
-chown -R mysql:mysql /var/tmp/mysqld
-chmod 0750 /var/tmp/mysqld
+chown -R mysql:mysql /var/tmp/mariadb
+chmod 0750 /var/tmp/mariadb
 chown -R mysql:mysql /var/lib/mysql
 
 
@@ -219,27 +219,26 @@ if [ -n "$MYSQL_CLUSTER_JOIN" ]; then
 	fi
 
 	{
-		echo "[sst]"
-		echo "tmpdir = /var/tmp/mysqld/sst"
 		echo "[mariadb]"
 		echo "wsrep_on = ON"
-		echo "binlog_format= 'ROW'"
-	} > "$CLUSTER_CONF_FILE"
+		echo "wsrep_provider = /opt/mariadb/lib/galera/libgalera_smm.so"
+		echo "wsrep_sst_method = mariabackup"
+		echo "binlog_format= ROW"
 
-	if [ -n "${MYSQL_CLUSTER_NAME}" ]; then
-		echo "wsrep_cluster_name = $MYSQL_CLUSTER_NAME" >> "$CLUSTER_CONF_FILE"
-	fi
+		if [ -n "${MYSQL_CLUSTER_NAME}" ]; then
+			echo "wsrep_cluster_name = $MYSQL_CLUSTER_NAME"
+		fi
 
-	{
 		echo "wsrep_node_name = $MYSQL_CLUSTER_NODE_NAME"
 		echo "wsrep_node_address = $MYSQL_CLUSTER_NODE_IP:$MYSQL_CLUSTER_NODE_PORT"
 		echo "wsrep_cluster_address = gcomm://$MYSQL_CLUSTER_JOIN"
-	}  >> "$CLUSTER_CONF_FILE"
 
-	if [ -n "$MYSQL_CLUSTER_DEBUG" ]; then
-		echo "wsrep_debug = ON" >> "$CLUSTER_CONF_FILE"
-	fi
-	echo "wsrep_provider_options = gmcast.listen_addr=tcp://[::]:4567" >> "$CLUSTER_CONF_FILE"
+		if [ -n "$MYSQL_CLUSTER_DEBUG" ]; then
+			echo "wsrep_debug = 1"
+		fi
+
+		echo "wsrep_provider_options = gmcast.listen_addr=tcp://[::]:4567" >> "$CLUSTER_CONF_FILE"
+	}  >> "$CLUSTER_CONF_FILE"
 
 	# We need to make sure that the "mysql" user exists as this is used for SST
 	if [ -e /var/lib/mysql/.create_sst_user ]; then
@@ -248,7 +247,7 @@ if [ -n "$MYSQL_CLUSTER_JOIN" ]; then
 SET @@SESSION.SQL_LOG_BIN=0;
 FLUSH PRIVILEGES;
 DROP USER IF EXISTS 'mariadb.sst'@'localhost';
-GRANT RELOAD, PROCESS, LOCK TABLES, REPLICATION CLIENT ON *.* TO 'mariadb.sst'@'localhost' IDENTIFIED BY '$MYSQL_SST_PASSWORD';
+GRANT RELOAD, PROCESS, LOCK TABLES, BINLOG MONITOR, REPLICA MONITOR, REPLICATION CLIENT, SLAVE MONITOR ON *.* TO 'mariadb.sst'@'localhost' IDENTIFIED BY '$MYSQL_SST_PASSWORD';
 SET PASSWORD FOR 'mariadb.sst'@'localhost'=PASSWORD('$MYSQL_SST_PASSWORD');
 FLUSH PRIVILEGES;
 EOF
