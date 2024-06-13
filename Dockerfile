@@ -28,9 +28,6 @@ FROM registry.conarx.tech/containers/alpine/edge as builder
 
 
 # NB: Must be updated below too in image version
-#ENV MARIADB_VER=11.4.2
-#ENV MARIADB_BRANCH=11.4
-#ENV MARIADB_COMMIT=c9414ccd6701fcbe04fcda898e695c44783cf2a9
 ENV MARIADB_VER=10.11.8
 ENV MARIADB_BRANCH=10.11
 ENV MARIADB_COMMIT=5b89cab44f409d3774b6c8255dfd2c72b2ade1af
