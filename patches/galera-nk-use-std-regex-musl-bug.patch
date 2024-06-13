@@ -1,0 +1,131 @@
+diff --git a/galera/src/replicator_str.cpp b/galera/src/replicator_str.cpp
+index 0db34c44..1fdbfe7a 100644
+--- a/galera/src/replicator_str.cpp
++++ b/galera/src/replicator_str.cpp
+@@ -317,6 +317,13 @@ get_ist_request(const ReplicatorSMM::StateRequest* str, IST_request* istr)
+   assert(str->ist_len());
+   std::string ist_str(static_cast<const char*>(str->ist_req()),
+                       str->ist_len());
++  // NK: Respect str->ist_len() but also remove the stray '\0' if one exists at
++  // the end. I'm not 100% sure if there will ALWAYS be a '\0' or not, so lets
++  // just err on the side of safety.
++  if (!ist_str.empty() && ist_str.back() == '\0')
++  {
++      ist_str.pop_back();
++  }
+   std::istringstream is(ist_str);
+   is >> *istr;
+ }
+diff --git a/galerautils/src/gu_regex.cpp b/galerautils/src/gu_regex.cpp
+index 85c13fd1..18a6acc3 100644
+--- a/galerautils/src/gu_regex.cpp
++++ b/galerautils/src/gu_regex.cpp
+@@ -14,41 +14,32 @@ namespace gu
+     using std::string;
+     using std::vector;
+ 
+-    string
+-    RegEx::strerror (int rc) const
+-    {
+-        char buf[128];
+-
+-        regerror(rc, &regex, buf, sizeof(buf));
+-
+-        return string (buf);
+-    }
+-
+-    static inline RegEx::Match
+-    regmatch2Match (const string& str, const regmatch_t& rm)
+-    {
+-        if (rm.rm_so == -1) return RegEx::Match();
+-
+-        return RegEx::Match (str.substr(rm.rm_so, rm.rm_eo - rm.rm_so));
+-    }
+-
+     vector<RegEx::Match>
+     RegEx::match (const string& str, size_t num) const
+     {
+         vector<RegEx::Match> ret;
+-        int rc;
+-
+-        VLA<regmatch_t> matches(num);
+-
+-        if ((rc = regexec(&regex, str.c_str(), num, &matches, 0)))
+-        {
+-            gu_throw_error (EINVAL) << "regexec(" << str << "): "
+-                                    << strerror(rc);
++        std::smatch matches;
++
++        try {
++            if (!std::regex_match(str, matches, regex)) {
++                gu_throw_error(EINVAL)
++                    << "std::regex_match(" << str << "): Not found";
++            }
++        } catch (const std::regex_error& e) {
++            gu_throw_error(EINVAL)
++                << "std::regex_match(" << str << "): " << e.what();
++        } catch (const std::exception& e) {
++            gu_throw_error(EINVAL)
++                << "std::regex_match(" << str << "): " << e.what();
+         }
+ 
+         for (size_t i = 0; i < num; ++i)
+         {
+-            ret.push_back (regmatch2Match (str, matches[i]));
++            if (i < matches.size() && matches[i].matched) {
++                ret.push_back(RegEx::Match(matches[i].str()));
++                continue;
++            }
++            ret.push_back(RegEx::Match());
+         }
+ 
+         return ret;
+diff --git a/galerautils/src/gu_regex.hpp b/galerautils/src/gu_regex.hpp
+index 85dd5d03..2cc41926 100644
+--- a/galerautils/src/gu_regex.hpp
++++ b/galerautils/src/gu_regex.hpp
+@@ -9,7 +9,7 @@
+ #ifndef _gu_regex_hpp_
+ #define _gu_regex_hpp_
+ 
+-#include <regex.h>
++#include <regex>
+ #include <string>
+ #include <vector>
+ 
+@@ -19,7 +19,7 @@ namespace gu
+ {
+     class RegEx
+     {
+-        regex_t     regex;
++        std::regex  regex;
+ 
+         std::string strerror (int rc) const;
+ 
+@@ -30,19 +30,16 @@ namespace gu
+          */
+         RegEx (const std::string& expr) : regex()
+         {
+-            int rc;
+-
+-            if ((rc = regcomp(&regex, expr.c_str(), REG_EXTENDED)) != 0)
+-            {
+-                gu_throw_fatal << "regcomp(" << expr << "): " << strerror(rc);
++            try {
++                regex
++                    = std::regex(expr, std::regex_constants::extended);
++            } catch (const std::regex_error& e) {
++                gu_throw_fatal << "std::regex(" << expr << "): " << e.what();
++            } catch (const std::exception& e) {
++                gu_throw_fatal << "std::regex(" << expr << "): " << e.what();
+             }
+         }
+ 
+-        ~RegEx ()
+-        {
+-            regfree (&regex);
+-        }
+-
+         /*!
+          * This class is to differentiate between an empty and unset strings.
+          * @todo: find a proper name for it and move to gu_utils.hpp

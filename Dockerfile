@@ -28,13 +28,19 @@ FROM registry.conarx.tech/containers/alpine/edge as builder
 
 
 # NB: Must be updated below too in image version
-ENV MARIADB_VER=10.11.7
-ENV GALERA_VER=26.4.13
+#ENV MARIADB_VER=11.4.2
+#ENV MARIADB_BRANCH=11.4
+#ENV MARIADB_COMMIT=c9414ccd6701fcbe04fcda898e695c44783cf2a9
+ENV MARIADB_VER=10.11.8
+ENV MARIADB_BRANCH=10.11
+ENV MARIADB_COMMIT=5b89cab44f409d3774b6c8255dfd2c72b2ade1af
+
 ENV WSREP_VER=26
-# https://github.com/codership/wsrep-API/commits/v26/
-ENV WSREP_COMMIT=427c73c5c8c443765ec16bfc70d94a65a7fca64c
+
 # https://github.com/MariaDB/galera/tree/mariadb-4.x-26.4.18
-ENV GALERA_COMMIT=ac815a03f3614fdb32adab0c49bad983400110d6
+ENV GALERA_VER=26.4.18
+ENV GALERA_BRANCH=mariadb-4.x-26.4.18
+ENV GALERA_COMMIT=a96793fc3c15067fcaf9a482d9d9da86bc60fd9d
 
 
 # Copy build patches
@@ -56,46 +62,53 @@ RUN set -eux; \
 		perl perl-dbi perl-dbd-mysql perl-getopt-long perl-socket perl-term-readkey \
 		\
 		boost-dev \
-		bzip2-dev zstd-dev lz4-dev lzo-dev snappy-dev jemalloc-dev asio-dev check-dev fmt-dev
+		bzip2-dev zstd-dev lz4-dev lzo-dev snappy-dev jemalloc-dev asio-dev check-dev fmt-dev \
+		\
+		git
 
 
 # Download MariaDB and Galera tarballs
 RUN set -eux; \
 	mkdir -p build; \
 	cd build; \
-	wget "https://downloads.mariadb.org/interstitial/mariadb-${MARIADB_VER}/source/mariadb-${MARIADB_VER}.tar.gz"; \
-	wget "https://github.com/MariaDB/galera/archive/${GALERA_COMMIT}.tar.gz" -O "galera-${GALERA_COMMIT}.tar.gz"; \
-	wget "https://github.com/codership/wsrep-API/archive/${WSREP_COMMIT}.tar.gz" -O "wsrep-api-${WSREP_COMMIT}.tar.gz"; \
-	tar -xf "mariadb-${MARIADB_VER}.tar.gz"; \
-	tar -xf "galera-${GALERA_COMMIT}.tar.gz"; \
-	tar -xf "wsrep-api-${WSREP_COMMIT}.tar.gz"
+	# Clone MariaDB
+	git clone  --verbose --depth 1 --branch "${MARIADB_BRANCH}" \
+		https://github.com/MariaDB/server.git "mariadb-${MARIADB_VER}"; \
+	cd "mariadb-${MARIADB_VER}"; \
+	git checkout "${MARIADB_COMMIT}"; \
+	git submodule update --jobs 8 --init --recursive --recommend-shallow; \
+	cd ..; \
+	# Clone Galera
+	git clone --verbose --depth 1 --branch "${GALERA_BRANCH}" \
+		https://github.com/MariaDB/galera.git "galera-${GALERA_VER}"; \
+	cd "galera-${GALERA_VER}"; \
+	git checkout "${GALERA_COMMIT}"
 
 
 # Build and install MariaDB
 RUN set -eux; \
 	cd build; \
 	cd mariadb-${MARIADB_VER}; \
-# Patching
-	patch -p1 < ../patches/mariadb-lfs64.patch; \
-	patch -p1 < ../patches/mariadb-10.11.3_better-temp-dirs.patch; \
-	patch -p1 < ../patches/mariadb-10.11.3_gcc13-fix.patch; \
-	patch -p1 < ../patches/mariadb-have_stacktrace.patch; \
+	# Patching
+	#patch -p1 < ../patches/mariadb-11.4.2_disable-failing-test.patch; \
+	patch -p1 < ../patches/mariadb-11.4.2_gcc13.patch; \
+	patch -p1 < ../patches/mariadb-11.4.2_have_stacktrace.patch; \
+	#patch -p1 < ../patches/mariadb-11.4.2_lfs64.patch; \
+	patch -p1 < ../patches/mariadb-10.11.7_lfs64.patch; \
 	\
-	source "VERSION"; \
-	#source ../galera-release_"${GALERA_VER}"/GALERA_VERSION; \
-	source ../galera-${GALERA_COMMIT}/GALERA_VERSION; \
-	MYSQL_VERSION="$MYSQL_VERSION_MAJOR.$MYSQL_VERSION_MINOR.$MYSQL_VERSION_PATCH"; \
-	WSREP_VERSION="$(grep WSREP_INTERFACE_VERSION wsrep-lib/wsrep-API/v26/wsrep_api.h | cut -d '"' -f2).$(grep 'SET(WSREP_PATCH_VERSION'  "cmake/wsrep-.cmake" | cut -d '"' -f2)"; \
-	GALERA_VERSION="$GALERA_VERSION_WSREP_API.$GALERA_VERSION_MAJOR.$GALERA_VERSION_MINOR$GALERA_VERSION_EXTRA"; \
-	COMMENT="MariaDB Cluster $MYSQL_VERSION, WSREP version $WSREP_VERSION, Galera version $GALERA_VERSION"; \
+	patch -p1 < ../patches/mariadb-11.4.2_nk-fix-poll-h.patch; \
+	\
 	# Compiler flags
 	. /etc/buildflags; \
 	\
+	WSREP_VERSION="$(grep WSREP_INTERFACE_VERSION wsrep-lib/wsrep-API/v26/wsrep_api.h | cut -d '"' -f2).$(grep 'SET(WSREP_PATCH_VERSION'  "cmake/wsrep-.cmake" | cut -d '"' -f2)"; \
+	COMMENT="MariaDB $MARIADB_VER ($MARIADB_BRANCH/$MARIADB_COMMIT), WSREP version $WSREP_VERSION, Galera version $GALERA_VER ($GALERA_BRANCH/$GALERA_COMMIT)"; \
+	# Configure
 	pkgname=mariadb; \
 	cmake -B build -G Ninja -Wno-dev \
 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
-		-DCMAKE_INSTALL_PREFIX=/usr \
-		-DCOMPILATION_COMMENT="Conarx Containers" \
+		-DCMAKE_INSTALL_PREFIX=/opt/mariadb \
+		-DCOMPILATION_COMMENT="Conarx Containers - $COMMENT" \
 		-DSYSCONFDIR=/etc \
 		-DSYSCONF2DIR=/etc/my.cnf.d \
 		-DMYSQL_DATADIR=/var/lib/mysql \
@@ -113,7 +126,7 @@ RUN set -eux; \
 		-DINSTALL_SUPPORTFILESDIR=share/$pkgname \
 		-DINSTALL_MYSQLSHAREDIR=share/$pkgname \
 		-DINSTALL_DOCDIR=share/doc/$pkgname \
-		-DTMPDIR=/var/tmp \
+		-DTMPDIR=/var/tmp/mariadb \
 		-DCONNECT_WITH_MYSQL=ON \
 		-DCONNECT_WITH_LIBXML2=system \
 		-DCONNECT_WITH_ODBC=NO \
@@ -134,7 +147,7 @@ RUN set -eux; \
 		-DPLUGIN_AUTH_GSSAPI_CLIENT=OFF \
 		-DPLUGIN_CRACKLIB_PASSWORD_CHECK=NO \
 		-DWITH_ASAN=OFF \
-		-DWITH_EMBEDDED_SERVER=ON \
+		-DWITH_EMBEDDED_SERVER=OFF \
 		-DWITH_EXTRA_CHARSETS=complex \
 		-DWITH_INNODB_BZIP2=ON \
 		-DWITH_INNODB_LZ4=ON \
@@ -159,65 +172,73 @@ RUN set -eux; \
 		-DWITH_SSL=system \
 		-DWITH_VALGRIND=OFF \
 		-DWITH_ZLIB=system \
-		-DSKIP_TESTS=ON \
-		-DCOMPILATION_COMMENT="$COMMENT" \
+#		-DSKIP_TESTS=ON \
 		; \
 	\
-# Output build config
-	cmake -L; \
-	\
-# Build
+	# Build
 	cmake --build build; \
-# Install
+	# Test
+	cd build; \
+	mkdir /var/tmp/mariadb; \
+	ctest --output-on-failure; \
+	cd ..; \
+	# Install
 	pkgdir="/build/mariadb-root"; \
+	rootdir="$pkgdir/opt/mariadb"; \
 	DESTDIR="$pkgdir" cmake --install build; \
 	\
 	mkdir -p "$pkgdir"/etc/my.cnf.d; \
-# Remove cruft
-	find "$pkgdir" -type f -name "*.a" | xargs rm -fv; \
+	# Remove cruft
 	rm -rfv \
-		"$pkgdir"/usr/bin/mariadb_config \
-		"$pkgdir"/usr/bin/mysql_config \
-		"$pkgdir"/usr/include \
-		"$pkgdir"/usr/share/man \
-		"$pkgdir"/usr/lib/$pkgname/plugin/dialog.so \
-		"$pkgdir"/usr/lib/$pkgname/plugin/mysql_clear_password.so \
-		"$pkgdir"/usr/lib/$pkgname/plugin/sha256_password.so \
-		"$pkgdir"/usr/lib/$pkgname/plugin/caching_sha2_password.so \
-		"$pkgdir"/usr/lib/$pkgname/plugin/client_ed25519.so \
-		"$pkgdir"/usr/lib/libmysqlclient.so \
-		"$pkgdir"/usr/lib/libmysqlclient_r.so \
-		"$pkgdir"/usr/lib/libmariadb.so* \
-		"$pkgdir"/usr/lib/pkgconfig/libmariadb.pc \
-		"$pkgdir"/usr/mysql-test \
-		"$pkgdir"/usr/sql-bench \
-		"$pkgdir"/usr/lib/pkgconfig
+		"$rootdir"/bin/mariadb_config \
+		"$rootdir"/bin/mysql_config \
+		"$rootdir"/include \
+		"$rootdir"/share/info \
+		"$rootdir"/share/man \
+		"$rootdir"/share/doc \
+		"$rootdir"/lib/*.a \
+		"$rootdir"/lib/libmysqlclient.so \
+		"$rootdir"/lib/libmysqlclient_r.so \
+		"$rootdir"/lib/libmariadb.so* \
+		"$rootdir"/lib/pkgconfig/libmariadb.pc \
+		"$rootdir"/mariadb-test \
+		"$rootdir"/sql-bench \
+		"$rootdir"/lib/pkgconfig
 
 
 # Build and install Galera
 RUN set -eux; \
 	cd build; \
-	#cd galera-release_"${GALERA_VER}"; \
-	cd galera-${GALERA_COMMIT}; \
-# Patch
+	cd "galera-${GALERA_VER}"; \
+	# Patch
 	patch -p1 < ../patches/galera-musl-page-size.patch; \
 	patch -p1 < ../patches/galera-musl-sched_param.patch; \
 	patch -p1 < ../patches/galera-musl-sys-poll-h.patch; \
 	patch -p1 < ../patches/galera-musl-wordsize.patch; \
-# Use MaraiDB's wsrep
+	patch -p1 < ../patches/galera-fix_gcomm-test-check_evs2.patch; \
+	\
+	patch -p1 < ../patches/galera-nk-use-std-regex-musl-bug.patch; \
+	# Use MaraiDB's wsrep
 	rmdir wsrep/src; \
-	ln -s "../../wsrep-API-${WSREP_COMMIT}" wsrep/src; \
+	ln -s "../../mariadb-${MARIADB_VER}/wsrep-lib/wsrep-API/v${WSREP_VER}" wsrep/src; \
 	# Compiler flags
 	. /etc/buildflags; \
-# Build
+	\
+	# Configure
 	cmake -B build -G Ninja -Wno-dev \
 		-DCMAKE_BUILD_TYPE=RelWithDebInfo; \
+	# Build
 	cmake --build build; \
-# Install
+	# Test
+	cd build; \
+	ctest --output-on-failure; \
+	cd ..; \
+	# Install
 	pkgdir="/build/mariadb-root"; \
-	mkdir -p "$pkgdir"/usr/lib/galera; \
-	install -m0755 build/libgalera_smm.so "$pkgdir"/usr/lib/galera/; \
-	install -m0755 build/garb/garbd /usr/sbin/
+	rootdir="$pkgdir/opt/mariadb"; \
+	mkdir -p "$rootdir/lib/galera"; \
+	install -m0755 build/libgalera_smm.so "$rootdir"/lib/galera/; \
+	install -m0755 build/garb/garbd "$rootdir/bin"
 
 
 # Strip binaries
@@ -247,7 +268,8 @@ LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
 LABEL org.opencontainers.image.version   "edge"
 LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/edge"
 
-
+# Set path for MariaDB
+ENV PATH=/usr/local/sbin:/usr/local/bin:/opt/mariadb/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Copy in built binaries
 COPY --from=builder /build/mariadb-root /
@@ -259,12 +281,16 @@ RUN set -eux; \
 	apk add --no-cache coreutils rsync socat procps pv pwgen; \
 	apk add --no-cache \
 		libaio libssl3 libcrypto3 pcre2 snappy zstd-libs libxml2 nghttp2-libs ncurses-libs lzo xz-libs lz4-libs libcurl \
-		libbz2 brotli-libs fmt; \
+		libbz2 brotli-libs fmt \
+		; \
 	true "Setup user and group"; \
 	addgroup -S mysql 2>/dev/null; \
 	adduser -S -D -h /var/lib/mysql -s /sbin/nologin -G mysql -g mysql mysql 2>/dev/null; \
 	true "Create initdb dirs"; \
 	mkdir /var/lib/mysql-initdb.d; \
+	true "Install ld-musl-x86_64 path"; \
+	echo "# MariaDB" >> /etc/ld-musl-x86_64.path; \
+	echo "/opt/mariadb/lib" >> /etc/ld-musl-x86_64.path; \
 	true "Cleanup"; \
 	rm -f /var/cache/apk/*
 
@@ -273,7 +299,7 @@ RUN set -eux; \
 COPY etc/my.cnf /etc
 COPY etc/my.cnf.d/10_fdc_defaults.cnf /etc/my.cnf.d
 COPY etc/supervisor/conf.d/mariadb.conf /etc/supervisor/conf.d
-COPY usr/local/sbin/start-mariadb /usr/local/sbin
+COPY opt/mariadb/bin/start-mariadb /opt/mariadb/bin
 COPY usr/local/share/flexible-docker-containers/init.d/42-mariadb.sh /usr/local/share/flexible-docker-containers/init.d
 COPY usr/local/share/flexible-docker-containers/pre-init-tests.d/42-mariadb.sh /usr/local/share/flexible-docker-containers/pre-init-tests.d
 COPY usr/local/share/flexible-docker-containers/healthcheck.d/42-mariadb.sh /usr/local/share/flexible-docker-containers/healthcheck.d
@@ -287,12 +313,12 @@ RUN set -eux; \
 		/etc/my.cnf \
 		/etc/my.cnf.d/10_fdc_defaults.cnf \
 		/var/lib/mysql-initdb.d \
-		/usr/local/sbin/start-mariadb; \
+		/opt/mariadb/bin/start-mariadb; \
 	chmod 0644 \
 		/etc/my.cnf \
 		/etc/my.cnf.d/10_fdc_defaults.cnf; \
 	chmod 0755 \
-		/usr/local/sbin/start-mariadb; \
+		/opt/mariadb/bin/start-mariadb; \
 	chmod 750 \
 		/var/lib/mysql-initdb.d; \
 	fdc set-perms
