@@ -39,7 +39,7 @@ net-read-timeout = 6000
 sql-mode = STRICT_ALL_TABLES
 
 ; Listen on port 3306
-bind-address = ::
+bind-address = *
 
 ; Clustering variables, set to reasonable defaults
 wsrep_provider = /usr/lib/galera/libgalera_smm.so
