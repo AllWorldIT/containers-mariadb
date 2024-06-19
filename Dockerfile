@@ -69,14 +69,14 @@ RUN set -eux; \
 	mkdir -p build; \
 	cd build; \
 	# Clone MariaDB
-	git clone  --verbose --depth 1 --branch "${MARIADB_BRANCH}" \
+	git clone  --verbose --branch "${MARIADB_BRANCH}" \
 		https://github.com/MariaDB/server.git "mariadb-${MARIADB_VER}"; \
 	cd "mariadb-${MARIADB_VER}"; \
 	git checkout "${MARIADB_COMMIT}"; \
 	git submodule update --jobs 8 --init --recursive --recommend-shallow; \
 	cd ..; \
 	# Clone Galera
-	git clone --verbose --depth 1 --branch "${GALERA_BRANCH}" \
+	git clone --verbose --branch "${GALERA_BRANCH}" \
 		https://github.com/MariaDB/galera.git "galera-${GALERA_VER}"; \
 	cd "galera-${GALERA_VER}"; \
 	git checkout "${GALERA_COMMIT}"
