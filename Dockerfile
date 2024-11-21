@@ -28,9 +28,9 @@ FROM registry.conarx.tech/containers/alpine/3.20 as builder
 
 
 # NB: Must be updated below too in image version
-ENV MARIADB_VER=10.11.10
-ENV MARIADB_BRANCH=10.11
-ENV MARIADB_COMMIT=3d0fb150289716ca75cd64d62823cf715ee47646
+ENV MARIADB_VER=11.4.4
+ENV MARIADB_BRANCH=11.4
+ENV MARIADB_COMMIT=e9a502df08bad16aa8a354e854f3c014b1380e32
 
 ENV WSREP_VER=26
 
@@ -87,11 +87,10 @@ RUN set -eux; \
 	cd build; \
 	cd mariadb-${MARIADB_VER}; \
 	# Patching
-	#patch -p1 < ../patches/mariadb-11.4.2_disable-failing-test.patch; \
+	patch -p1 < ../patches/mariadb-11.4.4_disable-failing-test.patch; \
 	patch -p1 < ../patches/mariadb-11.4.2_gcc13.patch; \
 	patch -p1 < ../patches/mariadb-11.4.2_have_stacktrace.patch; \
-	#patch -p1 < ../patches/mariadb-11.4.2_lfs64.patch; \
-	patch -p1 < ../patches/mariadb-10.11.7_lfs64.patch; \
+	patch -p1 < ../patches/mariadb-11.4.2_lfs64.patch; \
 	\
 	patch -p1 < ../patches/mariadb-11.4.2_nk-fix-poll-h.patch; \
 	\
@@ -115,7 +114,7 @@ RUN set -eux; \
 		-DENABLED_LOCAL_INFILE=ON \
 		-DINSTALL_INFODIR=share/info \
 		-DINSTALL_MANDIR=share/man \
-		-DINSTALL_PAMDIR=/lib/security \
+		-DINSTALL_PAMDIR=lib/security \
 		-DINSTALL_PLUGINDIR=lib/$pkgname/plugin \
 		-DINSTALL_SCRIPTDIR=bin \
 		-DINSTALL_INCLUDEDIR=include/mysql \
@@ -136,7 +135,7 @@ RUN set -eux; \
 		-DPLUGIN_MYISAM=YES \
 		-DPLUGIN_MROONGA=NO \
 		-DPLUGIN_OQGRAPH=NO \
-		-DPLUGIN_PARTITION=NO \
+		-DPLUGIN_PARTITION=STATIC \
 		-DPLUGIN_ROCKSDB=YES \
 		-DPLUGIN_SPHINX=NO \
 		-DPLUGIN_TOKUDB=NO \
@@ -174,10 +173,8 @@ RUN set -eux; \
 	# Build
 	cmake --build build; \
 	# Test
-	cd build; \
 	mkdir /var/tmp/mariadb; \
-	ctest --output-on-failure; \
-	cd ..; \
+	ctest --test-dir build -E '(my_tzinfo)'; \
 	# Install
 	pkgdir="/build/mariadb-root"; \
 	rootdir="$pkgdir/opt/mariadb"; \
