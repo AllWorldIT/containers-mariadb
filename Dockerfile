@@ -274,7 +274,7 @@ COPY --from=builder /build/mariadb-root /
 RUN set -eux; \
 	true "Install requirements"; \
 # NK: These are critical for some tools to work correctly
-	apk add --no-cache coreutils rsync socat procps pv pwgen; \
+	apk add --no-cache coreutils iproute2-ss rsync socat procps pv pwgen; \
 	apk add --no-cache \
 		libaio libssl3 libcrypto3 pcre2 snappy zstd-libs libxml2 nghttp2-libs ncurses-libs lzo xz-libs lz4-libs libcurl \
 		libbz2 brotli-libs fmt \
