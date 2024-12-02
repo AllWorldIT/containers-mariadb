@@ -34,10 +34,10 @@ ENV MARIADB_COMMIT=0e8fb977b00983d98c4c35e39bc1f36463095938
 
 ENV WSREP_VER=26
 
-# https://github.com/MariaDB/galera/tree/mariadb-4.x-26.4.19
-ENV GALERA_VER=26.4.19
-ENV GALERA_BRANCH=mariadb-4.x-26.4.19
-ENV GALERA_COMMIT=86b6efc5ed52acbd4b290455dfb40e6df0dff259
+# https://github.com/MariaDB/galera/tree/mariadb-4.x-26.4.20
+ENV GALERA_VER=26.4.20
+ENV GALERA_BRANCH=mariadb-4.x-26.4.20
+ENV GALERA_COMMIT=987e5f17ef4a396d06fba29b6785bef01edfd926
 
 
 # Copy build patches
