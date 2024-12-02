@@ -28,9 +28,9 @@ FROM registry.conarx.tech/containers/alpine/3.20 as builder
 
 
 # NB: Must be updated below too in image version
-ENV MARIADB_VER=10.11.9
+ENV MARIADB_VER=10.11.10
 ENV MARIADB_BRANCH=10.11
-ENV MARIADB_COMMIT=0e8fb977b00983d98c4c35e39bc1f36463095938
+ENV MARIADB_COMMIT=3d0fb150289716ca75cd64d62823cf715ee47646
 
 ENV WSREP_VER=26
 
