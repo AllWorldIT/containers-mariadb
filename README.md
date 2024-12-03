@@ -129,6 +129,45 @@ Any file in this directory with a .sql, .sql.gz, .sql.xz or .sql.zst extension w
 MariaDB port 3306 is exposed.
 
 
+# Replication
+
+Replication can be enabled in both primary and replicate instances using the `MYSQL_REPLICATION_ID` setting below. This needs to
+be unique across all nodes.
+
+## Replication Settings
+
+Environment variables can be set to configure the cluster.
+
+### MYSQL_REPLICATION_ID
+
+**This option will enable binary logging and replication on both primaries and replicas**
+
+This is an integer and must be unique for all nodes.
+
+
+### MYSQL_REPLICATION_PRIMARY_USER
+
+Username to configure for the replication primary. This defaults to `repl`.
+
+### MYSQL_REPLICATION_PRIMARY_PASSWORD
+
+Password to configure for the replication primary user. If `MYSQL_REPLICATION_PRIMARY_USER` is specified, this must also be
+specified and will result in the user being created with this password on initialization.
+
+
+## Setting up Replication
+
+On the primary node, a backup needs to be made of the database... this must be copied to the replica.
+```bash
+docker-compose exec -T mariadb mariadb-dump --single-transaction --master-data --gtid DATABASE > replica-init.sql
+```
+
+On the replica node, change the master and restore the backup...
+```bash
+echo "CHANGE MASTER TO MASTER_HOST='node1', MASTER_USER='repluser', MASTER_PASSWORD='replpassword';" | docker-compose exec -T mariadb mariadb
+docker-compose exec -T mariadb mariadb < replica-init.sql
+```
+
 
 # Clustering
 

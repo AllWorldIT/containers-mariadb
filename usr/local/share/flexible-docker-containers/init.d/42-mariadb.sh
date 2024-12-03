@@ -118,7 +118,6 @@ GRANT ALL ON *.* TO 'root'@'%' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD' WITH GRANT O
 GRANT ALL ON *.* TO 'root'@'localhost' IDENTIFIED VIA unix_socket WITH GRANT OPTION;
 DELETE FROM user WHERE User = '';
 DROP DATABASE IF EXISTS test;
-FLUSH PRIVILEGES;
 EOF
 
 	# Trigger SST user creation
@@ -181,11 +180,60 @@ fi
 #
 
 if [ -n "$MYSQL_QUERY_CACHE_SIZE" ]; then
+	fdc_notice "Setting MariaDB 'query_cache_size' to ${MYSQL_QUERY_CACHE_SIZE}MiB"
 	query_cache_size=$((MYSQL_QUERY_CACHE_SIZE * 1024 * 1024))
 	echo "[mariadb]" > /etc/my.cnf.d/query-cache.cnf
 	echo "query_cache_size = $query_cache_size" >> /etc/my.cnf.d/query-cache.cnf
 fi
 
+
+# Make sure only one replication mode is active
+if [ -n "$MYSQL_REPLICATION_MASTER" ] && [ -n "$MYSQL_CLUSTER_JOIN" ]; then
+	fdc_error "MariaDB cannot be both a replication master and a cluster node"
+	false
+fi
+
+
+#
+# Replication
+#
+if [ -n "$MYSQL_REPLICATION_ID" ]; then
+	fdc_notice "Setting up MariaDB replication..."
+
+	REPLICATION_CONF_FILE=/etc/my.cnf.d/replication.cnf
+
+	fdc_notice "Setting replication ID set to $MYSQL_REPLICATION_ID"
+	# Configure the replication
+	{
+		echo "[mariadb]"
+		echo "server_id = $MYSQL_REPLICATION_ID"
+		echo "gtid_domain_id = $MYSQL_REPLICATION_ID"
+		echo "log-bin = ON"
+		echo "log-basename = primary1"
+		echo "binlog-format = mixed"
+		echo "expire_logs_days = 7"
+		echo "binlog_do_db = $MYSQL_DATABASE"
+		echo "replicate_do_db = $MYSQL_DATABASE"
+	} > "$REPLICATION_CONF_FILE"
+
+	# Configure replication user
+	if [ -n "$MYSQL_REPLICATION_USER" ]; then
+		if [ -z "$MYSQL_REPLICATION_PASSWORD" ]; then
+			fdc_error "For a MariaDB replication master, environment variable 'MYSQL_REPLICATION_PASSWORD' must be provided"
+			false
+		fi
+		fdc_notice "Setting up MariaDB replication user '$MYSQL_REPLICATION_USER'"
+		cat <<EOF | mariadbd --user=mysql --bootstrap --verbose=0 --skip-networking=1
+SET @@SESSION.SQL_LOG_BIN=0;
+FLUSH PRIVILEGES;
+USE mysql;
+GRANT REPLICATION SLAVE ON *.* TO '$MYSQL_REPLICATION_USER'@'%';
+SET PASSWORD FOR '$MYSQL_REPLICATION_USER'@'%' = PASSWORD('$MYSQL_REPLICATION_PASSWORD');
+EOF
+	fi
+else
+	fdc_info "MariaDB not running in replication mode"
+fi
 
 
 #
@@ -249,7 +297,6 @@ FLUSH PRIVILEGES;
 DROP USER IF EXISTS 'mariadb.sst'@'localhost';
 GRANT RELOAD, PROCESS, LOCK TABLES, BINLOG MONITOR, REPLICA MONITOR, REPLICATION CLIENT, SLAVE MONITOR ON *.* TO 'mariadb.sst'@'localhost' IDENTIFIED BY '$MYSQL_SST_PASSWORD';
 SET PASSWORD FOR 'mariadb.sst'@'localhost'=PASSWORD('$MYSQL_SST_PASSWORD');
-FLUSH PRIVILEGES;
 EOF
 		rm -f /var/lib/mysql/.create_sst_user
 	fi
