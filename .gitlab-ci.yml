@@ -40,6 +40,7 @@ include:
 test-cluster:
   <<: *docker_login
   stage: test
+  allow_failure: true
   parallel:
     matrix:
       - WITH_GTID: [ "GTID:off", "GTID:on" ]

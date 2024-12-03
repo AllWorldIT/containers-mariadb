@@ -132,6 +132,8 @@ MariaDB port 3306 is exposed.
 
 # Clustering
 
+WARNING: Clustering support is possibly broken due to segfaults on mariadb-backup after 10.11.9.
+
 When using clustering the database credentials above and below MUST be the same across all nodes.
 
 If you are moving the first node from a normal DB to a clustered setup you will need to create a `.create_sst_user` file in the
