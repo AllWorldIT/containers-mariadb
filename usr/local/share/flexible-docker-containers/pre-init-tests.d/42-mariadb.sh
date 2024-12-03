@@ -29,6 +29,20 @@ export MYSQL_PASSWORD=testpass
 export MYSQL_ROOT_PASSWORD=rootpass
 export MYSQL_DATABASE=testdb
 
+
+if [ "$FDC_CI" = "repl-node1" ]; then
+	export MYSQL_REPLICATION_ID=1
+	export MYSQL_REPLICATION_USER=repluser
+	export MYSQL_REPLICATION_PASSWORD=replpassword
+fi
+if [ "$FDC_CI" = "repl-node2" ]; then
+	export MYSQL_REPLICATION_ID=2
+fi
+if [ "$FDC_CI" = "repl-node3" ]; then
+	export MYSQL_REPLICATION_ID=3
+fi
+
+
 # Check if we're doing a gtid-flavor cluster test
 if [ "$FDC_CI" = "cluster-node1-gtid" ]; then
 	export FDC_CI=cluster-node1
@@ -56,14 +70,12 @@ if [ "$FDC_CI" = "cluster-node1" ]; then
 	export _MYSQL_CLUSTER_BOOTSTRAP=yes
 	export _MYSQL_CLUSTER_BOOTSTRAP_FORCE=yes
 fi
-
 if [ "$FDC_CI" = "cluster-node2" ]; then
 	export MYSQL_CLUSTER_NODE_NAME=node2
 	export MYSQL_CLUSTER_JOIN=node1,node2,node3
 	# NK: We need to stagger startups or we get duplicate uuid's ... wtf
 	sleep 5
 fi
-
 if [ "$FDC_CI" = "cluster-node3" ]; then
 	export MYSQL_CLUSTER_NODE_NAME=node3
 	export MYSQL_CLUSTER_JOIN=node1,node2,node3
