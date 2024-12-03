@@ -20,13 +20,39 @@
 # IN THE SOFTWARE.
 
 
-# We only run this test for cluster nodes
-if [ "$FDC_CI" != "cluster-node1" ] && [ "$FDC_CI" != "cluster-node2" ] && [ "$FDC_CI" != "cluster-node3" ] &&
-		[ "$FDC_CI" != "repl-node1" ] && [ "$FDC_CI" != "repl-node2" ] && [ "$FDC_CI" != "repl-node3" ]; then
+# Function to wait for database startup
+function wait_for_startup() {
+	database=$1
+	table=$2
+	column=$3
+	check=$4
+
+	for i in {240..0}; do
+		got_value=$(echo "SELECT $column FROM $table" | mariadb -s "$database" 2>&1) || true
+		fdc_test_progress mariadb "Got\n$got_value"
+		if [ "$got_value" = "$check" ]; then
+			break
+		fi
+		fdc_test_progress mariadb "Waiting for correct value ('$database', '$table', '$column')... ${i}s"
+		sleep 1
+	done
+	if [ "$i" = 0 ]; then
+		fdc_test_fail mariadb "Database did not return correct value ('$database', '$table', '$column')\nResult: $got_value"
+		return 1
+	fi
+	return
+}
+
+
+# We only run this test for repl nodes
+if [ "$FDC_CI" != "repl-node1" ] && [ "$FDC_CI" != "repl-node2" ] && [ "$FDC_CI" != "repl-node3" ]; then
 	return
 fi
 
-
-fdc_notice "Done with MariaDB testing, waiting for shutdown"
-echo "PASSED" > /PASSED_MARIADB
-sleep 600
+fdc_test_start mariadb "Testing database table value"
+# Wait for success and touch passed file if it did
+if ! wait_for_startup testdb testtable value SUCCESS; then
+	fdc_test_fail mariadb "Detabase table value test failed"
+	false
+fi
+fdc_test_pass mariadb "Database table value matches"

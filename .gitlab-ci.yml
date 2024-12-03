@@ -37,6 +37,17 @@ include:
     - echo "$CI_REGISTRY_PASSWORD" | docker login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
 
 
+test-replication:
+  <<: *docker_login
+  stage: test
+  script:
+    - docker pull "${PIPELINE_IMAGE}"
+    - cp -a tests/replication "tests-${CI_COMMIT_SHORT_SHA}-${CI_CONCURRENT_ID}"
+    - cd "tests-${CI_COMMIT_SHORT_SHA}-${CI_CONCURRENT_ID}"
+    - sed -e "s,@@PIPELINE_IMAGE@@,${PIPELINE_IMAGE}," < docker-compose.yml.tmpl > docker-compose.yml
+    - ./run-replication-test
+
+
 test-cluster:
   <<: *docker_login
   stage: test
@@ -47,7 +58,7 @@ test-cluster:
   script:
     - if [ "$WITH_GTID" = "GTID:on" ]; then WITH_GTID=-gtid; else WITH_GTID=""; fi
     - docker pull "${PIPELINE_IMAGE}"
-    - cp -a tests "tests-${CI_COMMIT_SHORT_SHA}-${CI_CONCURRENT_ID}"
+    - cp -a tests/cluster "tests-${CI_COMMIT_SHORT_SHA}-${CI_CONCURRENT_ID}"
     - cd "tests-${CI_COMMIT_SHORT_SHA}-${CI_CONCURRENT_ID}"
     - sed -e "s,@@PIPELINE_IMAGE@@,${PIPELINE_IMAGE}," -e "s,@@WITH_GTID@@,${WITH_GTID}," < docker-compose.yml.tmpl > docker-compose.yml
     - ./run-cluster-test
