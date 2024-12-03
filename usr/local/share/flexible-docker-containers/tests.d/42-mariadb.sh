@@ -67,12 +67,23 @@ fi
 
 
 # Wait for database startup
-echo fdc_test_start mariadb "Wait for startup"
+fdc_test_start mariadb "Wait for startup"
 wait_for_startup
-echo fdc_test_pass mariadb "Database started"
+fdc_test_pass mariadb "Database started"
+
+if [ "$FDC_CI" = "repl-node1" ]; then
+	fdc_test_start mariadb "Dump base database"
+	if ! mariadb-dump --single-transaction --master-data --gtid "$MYSQL_DATABASE" > /root/dump.sql; then
+		fdc_test_fail mariadb "Failed to dump base database"
+		false
+	fi
+	fdc_test_pass mariadb "Base database dumped"
+fi
+
+touch /READY_MARIADB
 
 # Only create the database for normal tests and cluster node1
-if [ "$FDC_CI" != "true" ] && [ "$FDC_CI" != "cluster-node1" ]; then
+if [ "$FDC_CI" != "true" ] && [ "$FDC_CI" != "cluster-node1" ] && [ "$FDC_CI" != "repl-node1" ]; then
 	return
 fi
 
