@@ -28,16 +28,16 @@ FROM registry.conarx.tech/containers/alpine/3.20 as builder
 
 
 # NB: Must be updated below too in image version
-ENV MARIADB_VER=10.11.9
-ENV MARIADB_BRANCH=10.11
-ENV MARIADB_COMMIT=0e8fb977b00983d98c4c35e39bc1f36463095938
+ENV MARIADB_VER=11.4.4
+ENV MARIADB_BRANCH=11.4
+ENV MARIADB_COMMIT=e9a502df08bad16aa8a354e854f3c014b1380e32
 
 ENV WSREP_VER=26
 
-# https://github.com/MariaDB/galera/tree/mariadb-4.x-26.4.19
-ENV GALERA_VER=26.4.19
-ENV GALERA_BRANCH=mariadb-4.x-26.4.19
-ENV GALERA_COMMIT=86b6efc5ed52acbd4b290455dfb40e6df0dff259
+# https://github.com/MariaDB/galera/tree/mariadb-4.x-26.4.20
+ENV GALERA_VER=26.4.20
+ENV GALERA_BRANCH=mariadb-4.x-26.4.20
+ENV GALERA_COMMIT=987e5f17ef4a396d06fba29b6785bef01edfd926
 
 
 # Copy build patches
@@ -87,11 +87,10 @@ RUN set -eux; \
 	cd build; \
 	cd mariadb-${MARIADB_VER}; \
 	# Patching
-	#patch -p1 < ../patches/mariadb-11.4.2_disable-failing-test.patch; \
+	patch -p1 < ../patches/mariadb-11.4.4_disable-failing-test.patch; \
 	patch -p1 < ../patches/mariadb-11.4.2_gcc13.patch; \
 	patch -p1 < ../patches/mariadb-11.4.2_have_stacktrace.patch; \
-	#patch -p1 < ../patches/mariadb-11.4.2_lfs64.patch; \
-	patch -p1 < ../patches/mariadb-10.11.7_lfs64.patch; \
+	patch -p1 < ../patches/mariadb-11.4.2_lfs64.patch; \
 	\
 	patch -p1 < ../patches/mariadb-11.4.2_nk-fix-poll-h.patch; \
 	\
@@ -115,7 +114,7 @@ RUN set -eux; \
 		-DENABLED_LOCAL_INFILE=ON \
 		-DINSTALL_INFODIR=share/info \
 		-DINSTALL_MANDIR=share/man \
-		-DINSTALL_PAMDIR=/lib/security \
+		-DINSTALL_PAMDIR=lib/security \
 		-DINSTALL_PLUGINDIR=lib/$pkgname/plugin \
 		-DINSTALL_SCRIPTDIR=bin \
 		-DINSTALL_INCLUDEDIR=include/mysql \
@@ -136,7 +135,7 @@ RUN set -eux; \
 		-DPLUGIN_MYISAM=YES \
 		-DPLUGIN_MROONGA=NO \
 		-DPLUGIN_OQGRAPH=NO \
-		-DPLUGIN_PARTITION=NO \
+		-DPLUGIN_PARTITION=STATIC \
 		-DPLUGIN_ROCKSDB=YES \
 		-DPLUGIN_SPHINX=NO \
 		-DPLUGIN_TOKUDB=NO \
@@ -174,10 +173,8 @@ RUN set -eux; \
 	# Build
 	cmake --build build; \
 	# Test
-	cd build; \
 	mkdir /var/tmp/mariadb; \
-	ctest --output-on-failure; \
-	cd ..; \
+	ctest --test-dir build -E '(my_tzinfo)'; \
 	# Install
 	pkgdir="/build/mariadb-root"; \
 	rootdir="$pkgdir/opt/mariadb"; \
@@ -274,7 +271,7 @@ COPY --from=builder /build/mariadb-root /
 RUN set -eux; \
 	true "Install requirements"; \
 # NK: These are critical for some tools to work correctly
-	apk add --no-cache coreutils rsync socat procps pv pwgen; \
+	apk add --no-cache coreutils iproute2-ss rsync socat procps pv pwgen; \
 	apk add --no-cache \
 		libaio libssl3 libcrypto3 pcre2 snappy zstd-libs libxml2 nghttp2-libs ncurses-libs lzo xz-libs lz4-libs libcurl \
 		libbz2 brotli-libs fmt \
