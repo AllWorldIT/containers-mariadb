@@ -1,4 +1,4 @@
-# Copyright (c) 2022-2023, AllWorldIT.
+# Copyright (c) 2022-2025, AllWorldIT.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -24,7 +24,7 @@
 #
 
 
-FROM registry.conarx.tech/containers/alpine/3.20 as builder
+FROM registry.conarx.tech/containers/alpine/3.21 as builder
 
 
 # NB: Must be updated below too in image version
@@ -59,7 +59,7 @@ RUN set -eux; \
 		perl perl-dbi perl-dbd-mysql perl-getopt-long perl-socket perl-term-readkey \
 		\
 		boost-dev \
-		bzip2-dev zstd-dev lz4-dev lzo-dev snappy-dev jemalloc-dev asio-dev check-dev fmt-dev \
+		bzip2-dev zstd-dev lz4-dev lzo-dev snappy-dev jemalloc-dev asio-dev check-dev \
 		\
 		git
 
@@ -157,7 +157,6 @@ RUN set -eux; \
 		-DWITH_ROCKSDB_SNAPPY=ON \
 		-DWITH_JEMALLOC=ON \
 		-DWITH_LIBARCHIVE=system \
-		-DWITH_LIBFMT=system \
 		-DWITH_LIBNUMA=NO \
 		-DWITH_LIBWRAP=OFF \
 		-DWITH_LIBWSEP=OFF \
@@ -252,14 +251,14 @@ RUN set -eux; \
 #
 
 
-FROM registry.conarx.tech/containers/alpine/3.20
+FROM registry.conarx.tech/containers/alpine/3.21
 
 
 ARG VERSION_INFO=
 
 LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   "edge"
-LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/edge"
+LABEL org.opencontainers.image.version   "3.21"
+LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.21"
 
 # Set path for MariaDB
 ENV PATH=/usr/local/sbin:/usr/local/bin:/opt/mariadb/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -274,7 +273,7 @@ RUN set -eux; \
 	apk add --no-cache coreutils iproute2-ss rsync socat procps pv pwgen; \
 	apk add --no-cache \
 		libaio libssl3 libcrypto3 pcre2 snappy zstd-libs libxml2 nghttp2-libs ncurses-libs lzo xz-libs lz4-libs libcurl \
-		libbz2 brotli-libs fmt \
+		libbz2 brotli-libs \
 		; \
 	true "Setup user and group"; \
 	addgroup -S mysql 2>/dev/null; \
