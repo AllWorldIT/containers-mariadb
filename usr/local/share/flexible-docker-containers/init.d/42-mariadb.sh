@@ -217,18 +217,18 @@ if [ -n "$MYSQL_REPLICATION_ID" ]; then
 	} > "$REPLICATION_CONF_FILE"
 
 	# Configure replication user
-	if [ -n "$MYSQL_REPLICATION_USER" ]; then
-		if [ -z "$MYSQL_REPLICATION_PASSWORD" ]; then
-			fdc_error "For a MariaDB replication master, environment variable 'MYSQL_REPLICATION_PASSWORD' must be provided"
+	if [ -n "$MYSQL_REPLICATION_PRIMARY_USER" ]; then
+		if [ -z "$MYSQL_REPLICATION_PRIMARY_PASSWORD" ]; then
+			fdc_error "For a MariaDB replication master, environment variable 'MYSQL_REPLICATION_PRIMARY_PASSWORD' must be provided"
 			false
 		fi
-		fdc_notice "Setting up MariaDB replication user '$MYSQL_REPLICATION_USER'"
+		fdc_notice "Setting up MariaDB replication user '$MYSQL_REPLICATION_PRIMARY_USER'"
 		cat <<EOF | mariadbd --user=mysql --bootstrap --verbose=0 --skip-networking=1
 SET @@SESSION.SQL_LOG_BIN=0;
 FLUSH PRIVILEGES;
 USE mysql;
-GRANT REPLICATION SLAVE ON *.* TO '$MYSQL_REPLICATION_USER'@'%';
-SET PASSWORD FOR '$MYSQL_REPLICATION_USER'@'%' = PASSWORD('$MYSQL_REPLICATION_PASSWORD');
+GRANT REPLICATION SLAVE ON *.* TO '$MYSQL_REPLICATION_PRIMARY_USER'@'%';
+SET PASSWORD FOR '$MYSQL_REPLICATION_PRIMARY_USER'@'%' = PASSWORD('$MYSQL_REPLICATION_PRIMARY_PASSWORD');
 EOF
 	fi
 else
