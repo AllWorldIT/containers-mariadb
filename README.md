@@ -147,7 +147,7 @@ This is an integer and must be unique for all nodes.
 
 ### MYSQL_REPLICATION_PRIMARY_USER
 
-Username to configure for the replication primary. This defaults to `repl`.
+Username to configure for the replication primary.
 
 ### MYSQL_REPLICATION_PRIMARY_PASSWORD
 
@@ -164,7 +164,8 @@ docker-compose exec -T mariadb mariadb-dump --single-transaction --master-data -
 
 On the replica node, change the master and restore the backup...
 ```bash
-echo "CHANGE MASTER TO MASTER_HOST='node1', MASTER_USER='repluser', MASTER_PASSWORD='replpassword';" | docker-compose exec -T mariadb mariadb
+echo "CHANGE MASTER TO MASTER_HOST='node1', MASTER_USER='repluser', MASTER_PASSWORD='replpassword';" >> replica-init.sql
+echo "START SLAVE;" >> replica-init.sql
 docker-compose exec -T mariadb mariadb < replica-init.sql
 ```
 
