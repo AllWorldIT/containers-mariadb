@@ -28,16 +28,16 @@ FROM registry.conarx.tech/containers/alpine/3.21 as builder
 
 
 # NB: Must be updated below too in image version
-ENV MARIADB_VER=11.4.5
+ENV MARIADB_VER=11.4.7
 ENV MARIADB_BRANCH=11.4
-ENV MARIADB_COMMIT=0771110266ff5c04216af4bf1243c65f8c67ccf4
+ENV MARIADB_COMMIT=118cfcf82107188f2295631193658b2ef94f4f3f
 
 ENV WSREP_VER=26
 
-# https://github.com/MariaDB/galera/tree/mariadb-4.x-26.4.21
-ENV GALERA_VER=26.4.21
-ENV GALERA_BRANCH=mariadb-4.x-26.4.21
-ENV GALERA_COMMIT=471aeff565ba4386093ee1adf3af1648d6f0ae55
+# https://github.com/MariaDB/galera/tree/mariadb-4.x-26.4.22
+ENV GALERA_VER=26.4.22
+ENV GALERA_BRANCH=mariadb-4.x-26.4.22
+ENV GALERA_COMMIT=ae9921f58d8e7579cf8ae928aeeb582ce2d73012
 
 
 # Copy build patches
