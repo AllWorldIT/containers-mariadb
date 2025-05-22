@@ -32,8 +32,8 @@ export MYSQL_DATABASE=testdb
 
 if [ "$FDC_CI" = "repl-node1" ]; then
 	export MYSQL_REPLICATION_ID=1
-	export MYSQL_REPLICATION_USER=repluser
-	export MYSQL_REPLICATION_PASSWORD=replpassword
+	export MYSQL_REPLICATION_PRIMARY_USER=repluser
+	export MYSQL_REPLICATION_PRIMARY_PASSWORD=replpassword
 fi
 if [ "$FDC_CI" = "repl-node2" ]; then
 	export MYSQL_REPLICATION_ID=2
