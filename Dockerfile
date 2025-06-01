@@ -24,7 +24,7 @@
 #
 
 
-FROM registry.conarx.tech/containers/alpine/3.21 as builder
+FROM registry.conarx.tech/containers/alpine/3.22 as builder
 
 
 # NB: Must be updated below too in image version
@@ -251,14 +251,14 @@ RUN set -eux; \
 #
 
 
-FROM registry.conarx.tech/containers/alpine/3.21
+FROM registry.conarx.tech/containers/alpine/3.22
 
 
 ARG VERSION_INFO=
 
 LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   "3.21"
-LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.21"
+LABEL org.opencontainers.image.version   "3.22"
+LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/3.22"
 
 # Set path for MariaDB
 ENV PATH=/usr/local/sbin:/usr/local/bin:/opt/mariadb/bin:/usr/sbin:/usr/bin:/sbin:/bin
