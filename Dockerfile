@@ -208,6 +208,7 @@ RUN set -eux; \
 	patch -p1 < ../patches/galera-musl-sys-poll-h.patch; \
 	patch -p1 < ../patches/galera-musl-wordsize.patch; \
 	patch -p1 < ../patches/galera-fix_gcomm-test-check_evs2.patch; \
+	patch -p1 < ../patches/fix-cmake-version.patch; \
 	\
 	patch -p1 < ../patches/galera-nk-use-std-regex-musl-bug.patch; \
 	# Use MaraiDB's wsrep
