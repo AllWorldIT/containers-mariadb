@@ -24,20 +24,20 @@
 #
 
 
-FROM registry.conarx.tech/containers/alpine/edge as builder
+FROM registry.conarx.tech/containers/alpine/edge AS builder
 
 
 # NB: Must be updated below too in image version
-ENV MARIADB_VER=11.4.7
+ENV MARIADB_VER=11.4.9
 ENV MARIADB_BRANCH=11.4
-ENV MARIADB_COMMIT=118cfcf82107188f2295631193658b2ef94f4f3f
+ENV MARIADB_COMMIT=aa6a2e6bf05d43c3bb44db50566937a5f97a6580
 
 ENV WSREP_VER=26
 
-# https://github.com/MariaDB/galera/tree/mariadb-4.x-26.4.22
-ENV GALERA_VER=26.4.22
-ENV GALERA_BRANCH=mariadb-4.x-26.4.22
-ENV GALERA_COMMIT=ae9921f58d8e7579cf8ae928aeeb582ce2d73012
+# https://github.com/MariaDB/galera/commits/mariadb-26.4.23/
+ENV GALERA_VER=26.4.23
+ENV GALERA_BRANCH=mariadb-4.x-26.4.23
+ENV GALERA_COMMIT=72aa6adebc176588d2a3eef92cf79a08e364f0c9
 
 
 # Copy build patches
@@ -87,7 +87,7 @@ RUN set -eux; \
 	cd build; \
 	cd mariadb-${MARIADB_VER}; \
 	# Patching
-	patch -p1 < ../patches/mariadb-11.4.4_disable-failing-test.patch; \
+#	patch -p1 < ../patches/mariadb-11.4.4_disable-failing-test.patch; \
 	patch -p1 < ../patches/mariadb-11.4.2_gcc13.patch; \
 	patch -p1 < ../patches/mariadb-11.4.2_have_stacktrace.patch; \
 	patch -p1 < ../patches/mariadb-11.4.2_lfs64.patch; \
@@ -208,6 +208,7 @@ RUN set -eux; \
 	patch -p1 < ../patches/galera-musl-sys-poll-h.patch; \
 	patch -p1 < ../patches/galera-musl-wordsize.patch; \
 	patch -p1 < ../patches/galera-fix_gcomm-test-check_evs2.patch; \
+	patch -p1 < ../patches/fix-cmake-version.patch; \
 	\
 	patch -p1 < ../patches/galera-nk-use-std-regex-musl-bug.patch; \
 	# Use MaraiDB's wsrep
@@ -256,9 +257,9 @@ FROM registry.conarx.tech/containers/alpine/edge
 
 ARG VERSION_INFO=
 
-LABEL org.opencontainers.image.authors   "Nigel Kukard <nkukard@conarx.tech>"
-LABEL org.opencontainers.image.version   "edge"
-LABEL org.opencontainers.image.base.name "registry.conarx.tech/containers/alpine/edge"
+LABEL org.opencontainers.image.authors="Nigel Kukard <nkukard@conarx.tech>"
+LABEL org.opencontainers.image.version="edge"
+LABEL org.opencontainers.image.base.name="registry.conarx.tech/containers/alpine/edge"
 
 # Set path for MariaDB
 ENV PATH=/usr/local/sbin:/usr/local/bin:/opt/mariadb/bin:/usr/sbin:/usr/bin:/sbin:/bin

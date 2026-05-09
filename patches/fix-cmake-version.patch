@@ -1,0 +1,39 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ffd057c8..04302583 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -3,7 +3,7 @@
+ #
+ 
+ message(STATUS "CMake version ${CMAKE_VERSION}")
+-cmake_minimum_required(VERSION 2.8.12)
++cmake_minimum_required(VERSION 2.8...4.0)
+ project(galera-4)
+ 
+ include(CheckCCompilerFlag)
+diff --git a/cmake/boost.cmake b/cmake/boost.cmake
+index bc62fe2e..c7dcaaa4 100644
+--- a/cmake/boost.cmake
++++ b/cmake/boost.cmake
+@@ -14,7 +14,7 @@ if (NOT Boost_FOUND)
+   message(FATAL_ERROR "Could not find BOOST components")
+ else()
+   include_directories(${Boost_INCLUDE_DIRS})
+-  message(STATUS ${Boost_PROGRAM_OPTIONS_LIBRARIES})
++  message(STATUS "Found Boost program options library: ${Boost_PROGRAM_OPTIONS_LIBRARY}")
+ endif()
+ 
+ # Use nanosecond time precision
+diff --git a/garb/CMakeLists.txt b/garb/CMakeLists.txt
+index a60f48e2..25531d76 100644
+--- a/garb/CMakeLists.txt
++++ b/garb/CMakeLists.txt
+@@ -29,7 +29,7 @@ target_compile_options(garbd
+   )
+ 
+ target_link_libraries(garbd gcs4garb gcomm gcache
+-  ${Boost_PROGRAM_OPTIONS_LIBRARIES})
++  ${Boost_PROGRAM_OPTIONS_LIBRARY})
+ 
+ install(TARGETS garbd DESTINATION bin)
+ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES ".*BSD")
